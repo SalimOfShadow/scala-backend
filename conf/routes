@@ -7,7 +7,7 @@
 GET     /                           controllers.HomeController.index()
 
 POST    /test                       controllers.UserController.createUser()
-GET    /test                       controllers.UserController.connectedToTheDb()
+GET    /test                        controllers.UserController.testConnection()
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

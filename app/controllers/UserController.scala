@@ -68,10 +68,10 @@ class UserController @Inject() (val controllerComponents: ControllerComponents)
       }
   }
 
-  def connectedToTheDb(): Action[AnyContent] = Action.async {
+  def testConnection(): Action[AnyContent] = Action.async {
     implicit request: Request[AnyContent] =>
       val resultFuture =
-        new AuthenticationModel(Connection.db).connectedToTheDb()
+        new AuthenticationModel(Connection.db).getAllUsers()
 
       resultFuture
         .map { isUserValid =>
