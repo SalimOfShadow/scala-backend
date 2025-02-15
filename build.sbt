@@ -8,8 +8,10 @@ lazy val root = (project in file(".")).enablePlugins(PlayScala)
 scalaVersion := "2.13.15"
 
 libraryDependencies += guice
+libraryDependencies += jdbc
+
 libraryDependencies ++= Seq(
-  "com.github.pureconfig" %% "pureconfig-core" % "0.17.5",
+  "com.github.pureconfig" %% "pureconfig-core" % "0.17.7",
   "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.1" % Test,
   "org.playframework" %% "play-slick" % "6.1.1",
   "com.typesafe.slick" %% "slick-codegen" % "3.5.2",

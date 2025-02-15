@@ -1,99 +1,61 @@
 package controllers
 
-import database.Connection
 import database.models.users.AuthenticationModel
-import play.api._
-import play.api.mvc._
-import slick.jdbc.PostgresProfile.api._
-
 import javax.inject._
-import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import play.api.mvc._
+import scala.concurrent.{ExecutionContext, Future}
 
-/** This controller creates an `Action` to handle HTTP requests to the
-  * application's home page.
-  */
 @Singleton
-class UserController @Inject() (val controllerComponents: ControllerComponents)
-    extends BaseController {
+class UserController @Inject()(
+                                cc: ControllerComponents,
+                                authModel: AuthenticationModel
+                              )(implicit ec: ExecutionContext)
+  extends AbstractController(cc) {
 
-  def createUser(): Action[AnyContent] = Action.async {
-    implicit request: Request[AnyContent] =>
-      Future {
-        request.body match {
-          case AnyContentAsFormUrlEncoded(params) =>
-            println(s"urlEncoded = $params")
-            Ok(s"Params were found! $params")
+  /**
+   * GET /test
+   * Logs and returns all users from the database.
+   */
+  def testConnection(): Action[AnyContent] = Action.async { implicit request =>
+    authModel.getAllUsers.map { users =>
+      println(s"Users: $users")
+      Ok(s"Users: $users")
+    } recover { case ex: Throwable =>
+      println(s"An error occurred: ${ex.getMessage}")
+      InternalServerError("Database connection error.")
+    }
+  }
 
-          case mp @ AnyContentAsMultipartFormData(_) =>
-            println(s"multipart = ${mp.asFormUrlEncoded}")
-            Ok(s"Multipart params were found! ${mp.asFormUrlEncoded}")
-
-          case json @ AnyContentAsJson(_) =>
-            json.asJson match {
-              case Some(jsonValue) =>
-                val username = (jsonValue \ "username")
-                val password = (jsonValue \ "password")
-
-                if (username.isDefined) {
-                  val newDb = Database.forConfig("slick.dbs.default")
-                  val userModel = new AuthenticationModel(newDb)
-                  val isUserValid = userModel.validateUser(
-                    username.toString,
-                    password.toString
-                  )
-
-                  isUserValid.onComplete {
-                    case Success(isUserValid) =>
-                      println(s"User is valid: $isUserValid")
-                    case Failure(exception) =>
-                      println(s"An error occurred: ${exception.getMessage}")
-                  }
-
-                  println(s"json content found : ${jsonValue}")
-                  println(s"isUsernameDefined is ${username.isDefined}")
-                  Ok("ok")
-                } else {
-                  BadRequest("404 - Bad Request.")
-                }
-
-              case None =>
-                BadRequest("404 - Bad Request.")
+  /**
+   * POST /test
+   * Expects JSON with "username" and "password".
+   * Inserts a new user into the database, then retrieves and logs all users.
+   */
+  def createUser(): Action[AnyContent] = Action.async { implicit request =>
+    request.body.asJson match {
+      case Some(json) =>
+        val usernameOpt = (json \ "username").asOpt[String]
+        val passwordOpt = (json \ "password").asOpt[String]
+        (usernameOpt, passwordOpt) match {
+          case (Some(username), Some(password)) =>
+            // Insert the new user and then retrieve all users
+            for {
+              insertResult <- authModel.createUser(username, password)
+              users        <- authModel.getAllUsers
+            } yield {
+              if (insertResult) {
+                println(s"User '$username' created successfully.")
+                println(s"Current users: $users")
+                Ok(s"User '$username' created successfully. Current users: $users")
+              } else {
+                InternalServerError("Failed to create user.")
+              }
             }
-
           case _ =>
-            BadRequest("Unsupported content type.")
+            Future.successful(BadRequest("Missing username or password in JSON."))
         }
-      }
-  }
-
-  def testConnection(): Action[AnyContent] = Action.async {
-    implicit request: Request[AnyContent] =>
-      val resultFuture =
-        new AuthenticationModel(Connection.db).getAllUsers()
-
-      resultFuture
-        .map { isUserValid =>
-          println(s"User is valid: $isUserValid")
-          Ok(s"User is valid: $isUserValid")
-        }
-        .recover { case exception =>
-          println(s"An error occurred: ${exception.getMessage}")
-          InternalServerError(
-            "An error occurred while connecting to the database."
-          )
-        }
-  }
-
-  /** Create an Action to render an HTML page.
-    *
-    * The configuration in the `routes` file means that this method
-    * will be called when the application receives a `GET` request with
-    * a path of `/`.
-    */
-  def index(): Action[AnyContent] = Action {
-    implicit request: Request[AnyContent] =>
-      Ok(views.html.index())
+      case None =>
+        Future.successful(BadRequest("Expected JSON data."))
+    }
   }
 }

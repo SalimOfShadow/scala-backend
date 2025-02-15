@@ -18,7 +18,6 @@ class DatabaseController @Inject() (
     extends AbstractController(cc)
     with HasDatabaseConfigProvider[JdbcProfile] {
 
-  private val model = new AuthenticationModel(Connection.db)
 
   def load = Action { implicit request =>
     Ok(views.html.index())
