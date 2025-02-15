@@ -25,7 +25,7 @@ trait Tables {
   /** GetResult implicit for fetching ItemsRow objects using plain SQL queries */
   implicit def GetResultItemsRow(implicit e0: GR[Int], e1: GR[Option[Int]], e2: GR[Option[String]]): GR[ItemsRow] = GR{
     prs => import prs._
-    (ItemsRow.apply _).tupled((<<[Int], <<?[Int], <<?[String]))
+      (ItemsRow.apply _).tupled((<<[Int], <<?[Int], <<?[String]))
   }
   /** Table description of table items. Objects of this class serve as prototypes for rows in queries. */
   class Items(_tableTag: Tag) extends profile.api.Table[ItemsRow](_tableTag, "items") {
@@ -54,7 +54,7 @@ trait Tables {
   /** GetResult implicit for fetching UsersRow objects using plain SQL queries */
   implicit def GetResultUsersRow(implicit e0: GR[Int], e1: GR[String]): GR[UsersRow] = GR{
     prs => import prs._
-    (UsersRow.apply _).tupled((<<[Int], <<[String], <<[String]))
+      (UsersRow.apply _).tupled((<<[Int], <<[String], <<[String]))
   }
   /** Table description of table users. Objects of this class serve as prototypes for rows in queries. */
   class Users(_tableTag: Tag) extends profile.api.Table[UsersRow](_tableTag, "users") {

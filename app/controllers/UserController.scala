@@ -5,7 +5,7 @@ import database.models.users.AuthenticationModel
 import javax.inject._
 import play.api.mvc._
 import utils.ConsoleMessage.logMessage
-import utils.ValidateUser.isNewUserValid
+import utils.ValidateUser.validateInput
 
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.{Failure, Success}
@@ -38,10 +38,12 @@ class UserController @Inject() (
     request.body.asJson match {
       case Some(json) =>
         val usernameOpt = (json \ "username").asOpt[String]
+        val emailOpt = (json \ "email").asOpt[String]
         val passwordOpt = (json \ "password").asOpt[String]
-        (usernameOpt, passwordOpt) match {
-          case (Some(username), Some(password)) =>
-            val validationResult = isNewUserValid(username, password)
+
+        (usernameOpt, emailOpt, passwordOpt) match {
+          case (Some(username), Some(email), Some(password)) =>
+            val validationResult = validateInput(username, email, password)
             if (validationResult) {
               val createOperationResult: Future[Boolean] =
                 authModel.createUser(username, password)
