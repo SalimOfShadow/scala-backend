@@ -4,9 +4,11 @@ import database.models.users.AuthenticationModel
 
 import javax.inject._
 import play.api.mvc._
+import utils.ConsoleMessage.logMessage
 import utils.ValidateUser.isNewUserValid
 
 import scala.concurrent.{ExecutionContext, Future}
+import scala.util.{Failure, Success}
 
 @Singleton
 class UserController @Inject() (
@@ -41,31 +43,30 @@ class UserController @Inject() (
           case (Some(username), Some(password)) =>
             val validationResult = isNewUserValid(username, password)
             if (validationResult) {
-              for {
-                insertResult <- authModel.createUser(username, password)
-                users <- authModel.getAllUsers
-              } yield {
-                if (insertResult) {
-                  println(s"User '$username' created successfully.")
-                  println(s"Current users: $users")
-                  Ok(
-                    s"User '$username' created successfully. Current users: $users"
-                  )
-                } else {
-                  InternalServerError("Failed to create user.")
-                }
+              val createOperationResult: Future[Boolean] =
+                authModel.createUser(username, password)
+              createOperationResult.map {
+                case true =>
+                  logMessage("User created successfully")
+                  Ok("User created successfully")
+                case false =>
+                  logMessage("Failed to create the user")
+                  InternalServerError("Failed to create the user")
               }
             } else {
-              Future.successful{
+              logMessage("Invalid request body")
+              Future.successful {
                 BadRequest("Invalid request body")
               }
             }
           case _ =>
+            logMessage("Expected JSON data.")
             Future.successful(
               BadRequest("Missing username or password in JSON.")
             )
         }
       case None =>
+        logMessage("Expected JSON data.")
         Future.successful(BadRequest("Expected JSON data."))
     }
   }
