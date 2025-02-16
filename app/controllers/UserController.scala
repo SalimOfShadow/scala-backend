@@ -2,7 +2,7 @@ package controllers
 
 import models.requests.SignUpRequest
 import models.users.AuthenticationModel
-import play.api.libs.json.{JsError, JsSuccess}
+import play.api.libs.json.{JsError, JsSuccess, JsValue}
 
 import javax.inject._
 import play.api.mvc._
@@ -36,39 +36,28 @@ class UserController @Inject() (
     * Expects JSON with "username" and "password".
     * Inserts a new user into the database, then retrieves and logs all users.
     */
-  def createUser(): Action[AnyContent] = Action.async { implicit request =>
-    request.body.asJson match {
-      case Some(json) =>
-        json.validate[SignUpRequest] match {
-          case JsSuccess(signUpReq, _) =>
-            val validationResult = validateInput(
-              signUpReq.username,
-              signUpReq.email,
-              signUpReq.password
-            )
-            if (validationResult) {
-              val createOperationResult: Future[Result] =
-                authModel.createUser(
-                  signUpReq.username,
-                  signUpReq.email,
-                  signUpReq.password
-                )
-              createOperationResult
-            } else {
-              logMessage("Failed to create the user")
-              Future.successful(
-                InternalServerError("Failed to create the user")
-              )
-            }
-          case JsError(error) =>
-            Future.successful {
-              logMessage(s"Invalid request body. ${error}")
-              BadRequest(s"Invalid request body.")
-            }
+  def createUser(): Action[JsValue] = Action.async(parse.json) { implicit request =>
+    request.body.validate[SignUpRequest] match {
+      case JsSuccess(signUpReq, _) =>
+        if (validateInput(signUpReq.username, signUpReq.email, signUpReq.password)) {
+          authModel.createUser(signUpReq.username, signUpReq.email, signUpReq.password).map { result =>
+            logMessage("User created successfully.")
+            result
+          }.recover {
+            case ex: Exception =>
+              logMessage(s"Error creating user: ${ex.getMessage}")
+              InternalServerError("An error occurred while creating the user.")
+          }
+        } else {
+          logMessage("User input validation failed")
+          Future.successful(BadRequest("Invalid user input."))
         }
-      case None =>
-        logMessage("Invalid request body.")
+
+      case JsError(errors) =>
+        logMessage(s"Invalid request body: $errors")
         Future.successful(BadRequest("Invalid request body."))
     }
   }
+
+
 }
