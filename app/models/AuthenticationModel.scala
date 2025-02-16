@@ -1,16 +1,14 @@
-package models.users
+package models
 
-import models.Tables
 import org.mindrot.jbcrypt.BCrypt
 import org.postgresql.util.PSQLException
-
-import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
 import play.api.mvc.Result
 import play.api.mvc.Results.{Conflict, InternalServerError, Ok}
 import slick.jdbc.PostgresProfile
 import utils.ConsoleMessage.logMessage
 
+import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton

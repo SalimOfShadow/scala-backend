@@ -20,8 +20,11 @@ libraryDependencies ++= Seq(
   "com.github.tminglei" %% "slick-pg_play-json" % "0.22.2",
   "org.postgresql" % "postgresql" % "42.7.4",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.5.2",
-  "org.mindrot" % "jbcrypt" % "0.4"
+  "org.mindrot" % "jbcrypt" % "0.4",
+  "net.debasishg" %% "redisclient" % "3.42"
+
 )
+
 // Adds additional packages into Twirl
 //TwirlKeys.templateImports += "f.controllers._"
 

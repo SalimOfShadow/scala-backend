@@ -1,7 +1,7 @@
 package controllers
 
+import models.AuthenticationModel
 import models.requests.SignUpRequest
-import models.users.AuthenticationModel
 import play.api.libs.json.{JsError, JsSuccess, JsValue}
 
 import javax.inject._
