@@ -13,7 +13,7 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
   def storeSession(
       userId: Int,
       sessionToken: String,
-      expiration: Int = 3600
+      expiration: Int = 60 * 60 * 24
   ): Future[Boolean] = Future {
     redisPool.withClient { client =>
       client.setex(s"session:$userId", expiration, sessionToken)
@@ -23,6 +23,11 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
   def getSession(userId: Int): Future[Option[String]] = Future {
     redisPool.withClient { client =>
       client.get(s"session:$userId")
+    }
+  }
+  def getAllSession(): Future[Option[String]] = Future {
+    redisPool.withClient { client =>
+      client.get(s"session:12345")
     }
   }
 

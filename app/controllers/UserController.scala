@@ -1,6 +1,6 @@
 package controllers
 
-import models.AuthenticationModel
+import models.{AuthenticationModel, SessionModel}
 import models.requests.SignUpRequest
 import play.api.libs.json.{JsError, JsSuccess, JsValue}
 
@@ -15,7 +15,8 @@ import scala.util.{Failure, Success}
 @Singleton
 class UserController @Inject() (
     cc: ControllerComponents,
-    authModel: AuthenticationModel
+    authModel: AuthenticationModel,
+    sessionModel: SessionModel
 )(implicit ec: ExecutionContext)
     extends AbstractController(cc) {
 
@@ -32,32 +33,58 @@ class UserController @Inject() (
     }
   }
 
+  def testSession(): Action[AnyContent] = Action.async { implicit request =>
+    val result = sessionModel.storeSession(12345, "Token")
+    result.onComplete(result => println(result))
+    Future.successful(Ok(s"result"))
+  }
+
+  def testAllSession(): Action[AnyContent] = Action.async { implicit request =>
+    val result = sessionModel.getAllSession()
+    result.onComplete(result => println(result))
+    Future.successful(Ok(s"result"))
+  }
+
   /** POST /test
     * Expects JSON with "username" and "password".
     * Inserts a new user into the database, then retrieves and logs all users.
     */
-  def createUser(): Action[JsValue] = Action.async(parse.json) { implicit request =>
-    request.body.validate[SignUpRequest] match {
-      case JsSuccess(signUpReq, _) =>
-        if (validateInput(signUpReq.username, signUpReq.email, signUpReq.password)) {
-          authModel.createUser(signUpReq.username, signUpReq.email, signUpReq.password).map { result =>
-            logMessage("User created successfully.")
-            result
-          }.recover {
-            case ex: Exception =>
-              logMessage(s"Error creating user: ${ex.getMessage}")
-              InternalServerError("An error occurred while creating the user.")
+  def createUser(): Action[JsValue] = Action.async(parse.json) {
+    implicit request =>
+      request.body.validate[SignUpRequest] match {
+        case JsSuccess(signUpReq, _) =>
+          if (
+            validateInput(
+              signUpReq.username,
+              signUpReq.email,
+              signUpReq.password
+            )
+          ) {
+            authModel
+              .createUser(
+                signUpReq.username,
+                signUpReq.email,
+                signUpReq.password
+              )
+              .map { result =>
+                logMessage("User created successfully.")
+                result
+              }
+              .recover { case ex: Exception =>
+                logMessage(s"Error creating user: ${ex.getMessage}")
+                InternalServerError(
+                  "An error occurred while creating the user."
+                )
+              }
+          } else {
+            logMessage("User input validation failed")
+            Future.successful(BadRequest("Invalid user input."))
           }
-        } else {
-          logMessage("User input validation failed")
-          Future.successful(BadRequest("Invalid user input."))
-        }
 
-      case JsError(errors) =>
-        logMessage(s"Invalid request body: $errors")
-        Future.successful(BadRequest("Invalid request body."))
-    }
+        case JsError(errors) =>
+          logMessage(s"Invalid request body: $errors")
+          Future.successful(BadRequest("Invalid request body."))
+      }
   }
-
 
 }

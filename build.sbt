@@ -21,8 +21,8 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.4",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.5.2",
   "org.mindrot" % "jbcrypt" % "0.4",
-  "net.debasishg" %% "redisclient" % "3.42"
-
+  "net.debasishg" %% "redisclient" % "3.42",
+    "com.github.jwt-scala" %% "jwt-play-json" % "10.0.1"
 )
 
 // Adds additional packages into Twirl
