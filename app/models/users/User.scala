@@ -1,3 +1,3 @@
-package database.models.users
+package models.users
 
 final case class User(username: String, password: String, email: String)

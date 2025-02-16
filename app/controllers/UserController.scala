@@ -1,6 +1,8 @@
 package controllers
 
-import database.models.users.AuthenticationModel
+import models.requests.SignUpRequest
+import models.users.AuthenticationModel
+import play.api.libs.json.{JsError, JsSuccess}
 
 import javax.inject._
 import play.api.mvc._
@@ -37,39 +39,36 @@ class UserController @Inject() (
   def createUser(): Action[AnyContent] = Action.async { implicit request =>
     request.body.asJson match {
       case Some(json) =>
-        val usernameOpt = (json \ "username").asOpt[String]
-        val emailOpt = (json \ "email").asOpt[String]
-        val passwordOpt = (json \ "password").asOpt[String]
-
-        (usernameOpt, emailOpt, passwordOpt) match {
-          case (Some(username), Some(email), Some(password)) =>
-            val validationResult = validateInput(username, email, password)
-            if (validationResult) {
-              val createOperationResult: Future[Boolean] =
-                authModel.createUser(username, password)
-              createOperationResult.map {
-                case true =>
-                  logMessage("User created successfully")
-                  Ok("User created successfully")
-                case false =>
-                  logMessage("Failed to create the user")
-                  InternalServerError("Failed to create the user")
-              }
-            } else {
-              logMessage("Invalid request body")
-              Future.successful {
-                BadRequest("Invalid request body")
-              }
-            }
-          case _ =>
-            logMessage("Expected JSON data.")
-            Future.successful(
-              BadRequest("Missing username or password in JSON.")
+        json.validate[SignUpRequest] match {
+          case JsSuccess(signUpReq, _) =>
+            val validationResult = validateInput(
+              signUpReq.username,
+              signUpReq.email,
+              signUpReq.password
             )
+            if (validationResult) {
+              val createOperationResult: Future[Result] =
+                authModel.createUser(
+                  signUpReq.username,
+                  signUpReq.email,
+                  signUpReq.password
+                )
+              createOperationResult
+            } else {
+              logMessage("Failed to create the user")
+              Future.successful(
+                InternalServerError("Failed to create the user")
+              )
+            }
+          case JsError(error) =>
+            Future.successful {
+              logMessage(s"Invalid request body. ${error}")
+              BadRequest(s"Invalid request body.")
+            }
         }
       case None =>
-        logMessage("Expected JSON data.")
-        Future.successful(BadRequest("Expected JSON data."))
+        logMessage("Invalid request body.")
+        Future.successful(BadRequest("Invalid request body."))
     }
   }
 }

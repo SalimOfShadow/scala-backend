@@ -1,11 +1,13 @@
-package database.models.users
+package models.users
 
-import SQLCode.Tables
+import models.Tables
 import org.mindrot.jbcrypt.BCrypt
 import org.postgresql.util.PSQLException
 
 import javax.inject.{Inject, Singleton}
 import play.api.db.slick.DatabaseConfigProvider
+import play.api.mvc.Result
+import play.api.mvc.Results.{Conflict, InternalServerError, Ok}
 import slick.jdbc.PostgresProfile
 import utils.ConsoleMessage.logMessage
 
@@ -40,7 +42,7 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
     db.run(
       Users
         .filter(userRow =>
-          userRow.username === username && userRow.password === password
+          userRow.username === username && userRow.passwordHash === password
         )
         .result
     ).map(_.nonEmpty)
@@ -51,29 +53,42 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
   }
 
   // Create a new user
-  def createUser(username: String, password: String): Future[Boolean] = {
+  def createUser(
+      username: String,
+      email: String,
+      password: String
+  ): Future[Result] = {
     val salt = BCrypt.gensalt()
     val hashedPassword = BCrypt.hashpw(password, salt)
-    val newUser = Tables.UsersRow(0, username, hashedPassword)
+    val newUser = Tables.UsersRow(
+      0,
+      username,
+      email,
+      hashedPassword,
+      Some(false),
+      None,
+      None
+    )
     db.run(Users += newUser)
-      .map(_ => true)
+      .map(_ => Ok("User created successfully"))
       .recover {
         case e: PSQLException if e.getSQLState == "23505" =>
           logMessage("User already exists")
-          false
+          Conflict("User already exists")
         case e: Throwable =>
           logMessage(s"An error occurred while creating user: ${e.getMessage}")
-          false
+          InternalServerError("User already exists")
       }
   }
 
   def getAllUsers: Future[Seq[(Int, String, String)]] = {
-    db.run(Users.map(user => (user.id, user.username, user.password)).result)
-      .recover { case e: Throwable =>
-        println(
-          s"An error occurred while retrieving all users: ${e.getMessage}"
-        )
-        Seq()
-      }
+    db.run(
+      Users.map(user => (user.id, user.username, user.passwordHash)).result
+    ).recover { case e: Throwable =>
+      println(
+        s"An error occurred while retrieving all users: ${e.getMessage}"
+      )
+      Seq()
+    }
   }
 }
