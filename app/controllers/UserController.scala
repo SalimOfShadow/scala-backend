@@ -33,13 +33,13 @@ class UserController @Inject() (
 
   def testSession(): Action[AnyContent] = Action.async { implicit request =>
     val result = sessionModel.storeSession(12345, "Token")
-    result.onComplete(result => println(result))
+    result.onComplete(result => logMessage(result.toString))
     Future.successful(Ok(s"result"))
   }
 
   def testAllSession(): Action[AnyContent] = Action.async { implicit request =>
     val result = sessionModel.getAllSession
-    result.onComplete(result => println(result))
+    result.onComplete(result => logMessage(result.toString))
     Future.successful(Ok(s"result"))
   }
 

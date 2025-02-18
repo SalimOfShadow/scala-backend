@@ -12,16 +12,50 @@ import utils.ValidateUser.validateCreateInput
  */
 class ValidateUserSpec  extends AnyWordSpec with Matchers {
 
-  "ValidateUser" should   {
+  "validateCreateUser" should   {
 
     "return true if all params are present and correct" in {
-      val username = Some("vasds2")
+      val username = Some("validUsername")
       val email = Some("valid@email.com")
       val password = Some("validPassword1!")
 
       val actual = validateCreateInput(username,email,password)
-
       actual shouldBe true
+    }
+
+    "return false if even a single param is missing" in {
+      val username = Some("validUsername")
+      val password = Some("validPassword1!")
+
+      val actual = validateCreateInput(username,None,password)
+      actual shouldBe false
+    }
+
+    "return false if the username is invalid" in {
+      val username = Some("!sv")
+      val email = Some("valid@email.com")
+      val password = Some("validPassword1!")
+
+      val actual = validateCreateInput(username,email,password)
+      actual shouldBe false
+    }
+
+    "return false if the email is invalid" in {
+      val username = Some("validUsername")
+      val email = Some("invalidEmail.com")
+      val password = Some("validPassword1!")
+
+      val actual = validateCreateInput(username,email,password)
+      actual shouldBe false
+    }
+
+    "return false if the password is invalid" in {
+      val username = Some("validUsername")
+      val email = Some("valid@email.com")
+      val password = Some("invalidPassword")
+
+      val actual = validateCreateInput(username,email,password)
+      actual shouldBe false
     }
   }
 }
