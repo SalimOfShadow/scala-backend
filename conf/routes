@@ -6,10 +6,12 @@
 # An example controller showing a sample home page
 GET     /                           controllers.HomeController.index()
 
++nocsrf
 POST    /test                       controllers.UserController.createUser()
+
 GET    /test                        controllers.UserController.testConnection()
 GET    /getSession                  controllers.UserController.testSession()
-GET    /getAllSession                  controllers.UserController.testAllSession()
+GET    /getAllSession               controllers.UserController.testAllSession()
 GET    /insertSession               controllers.UserController.testConnection()
 
 # Map static resources from the /public folder to the /assets URL path

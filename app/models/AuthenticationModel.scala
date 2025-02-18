@@ -24,18 +24,6 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
   // Reference to the Users table from generated code
   val Users = Tables.Users
 
-  // Check if the database is connected
-  def connectedToTheDb(): Future[Boolean] = {
-    val query = sql"SELECT 1".as[Int]
-    db.run(query)
-      .map(_ => true)
-      .recover { case e: Throwable =>
-        println(s"Database connection check failed: ${e.getMessage}")
-        false
-      }
-  }
-
-  // Validate user login by checking the username and password
   def validateUser(username: String, password: String): Future[Boolean] = {
     db.run(
       Users
@@ -50,7 +38,6 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       }
   }
 
-  // Create a new user
   def createUser(
       username: String,
       email: String,
@@ -68,15 +55,22 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       None
     )
     db.run(Users += newUser)
-      .map(_ => Ok("User created successfully"))
+      .map(_ => {
+        logMessage("User created successfully")
+        Ok("User created successfully")
+      })
       .recover {
         case e: PSQLException if e.getSQLState == "23505" =>
           logMessage("User already exists")
           Conflict("User already exists")
         case e: Throwable =>
           logMessage(s"An error occurred while creating user: ${e.getMessage}")
-          InternalServerError("User already exists")
+          InternalServerError("Internal Serve Error")
       }
+  }
+
+  def loginUser(usernameOrEmail: String,password: String) = {
+    ???
   }
 
   def getAllUsers: Future[Seq[(Int, String, String)]] = {
@@ -89,4 +83,6 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       Seq()
     }
   }
+
+
 }
