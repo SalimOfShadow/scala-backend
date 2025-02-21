@@ -5,10 +5,13 @@ import play.api.libs.json.Json
 
 import java.time.Instant
 
-object JwtUtil {
-  val config: Config = ConfigFactory.load()
+object JwtUtil extends App {
+
   private val secretKey = config.getString("jwt.secret")
-  private val expirationTime = 60 * 60 * 24 // token should expire in  1 day
+  private val expirationTime =
+    config
+      .getString("jwt.expirationTime")
+      .toInt // token should expire in  1 day
   private val algo = JwtAlgorithm.HS256
 
   def createToken(
@@ -16,8 +19,8 @@ object JwtUtil {
       username: String
   ): String = {
     val claim = JwtClaim(
-      content = Json.obj("userId" -> userId, "username" -> username).toString(),
-      expiration = Some(Instant.now().getEpochSecond + expirationTime)
+      content = Json.obj("userId" -> userId, "username" -> username).toString,
+      expiration = Some(Instant.now.getEpochSecond + 20)
     )
     Jwt.encode(claim, secretKey, algo)
   }
@@ -25,4 +28,5 @@ object JwtUtil {
   def validateToken(token: String): Option[JwtClaim] = {
     Jwt.decode(token, secretKey, Seq(algo)).toOption
   }
+
 }
