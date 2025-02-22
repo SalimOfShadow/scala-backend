@@ -12,24 +12,20 @@ object ValidateUser {
     "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$".r
 
   private def isUsernameValid(username: String): Boolean =
-    usernamePattern.findFirstMatchIn(username) match {
-      case Some(value) =>
-        value.matched.length >= 4 && value.matched.length <= 20
-      case None => false
-    }
+    usernamePattern
+      .findFirstMatchIn(username)
+      .exists(u => u.matched.length >= 4 && u.matched.length <= 20)
 
   private def isEmailValid(email: String): Boolean =
-    emailPattern.findFirstMatchIn(email) match {
-      case Some(value) =>
-        value.matched.length >= 5 && value.matched.length <= 254
-      case None => false
-    }
-  private def isPasswordValid(password: String): Boolean =
-    passwordPattern.findFirstMatchIn(password) match {
-      case Some(value) =>
-        value.matched.length >= 8 && value.matched.length <= 100
-      case None => false
-    }
+    emailPattern
+      .findFirstMatchIn(email)
+      .exists(e => e.matched.length >= 5 && e.matched.length <= 254)
+
+  private def isPasswordValid(password: String): Boolean = {
+    passwordPattern
+      .findFirstMatchIn(password)
+      .exists(p => p.matched.length >= 8 && p.matched.length <= 100)
+  }
 
   def validateCreateInput(
       username: Option[String],

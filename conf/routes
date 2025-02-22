@@ -7,12 +7,20 @@
 GET     /                           controllers.HomeController.index()
 
 +nocsrf
-POST    /test                       controllers.UserController.createUser()
+POST    /create-user                controllers.UserController.createUser()
 
-GET    /test                        controllers.UserController.testConnection()
-GET    /getSession                  controllers.UserController.testSession()
-GET    /getAllSession               controllers.UserController.testAllSession()
-GET    /insertSession               controllers.UserController.testConnection()
+# TEST - Sessions
+GET    /test/getSession                  controllers.TestController.testSession()
+GET    /test/getAllSession               controllers.TestController.testAllSession()
+GET    /test/insertSession               controllers.TestController.testConnection()
+GET    /test/print                       controllers.TestController.testPrintSecrets()
+
+# TEST - JWT
+GET    /test/createToken                 controllers.TestController.testTokenCreationAndExpiry()
+GET    /test/validateToken               controllers.TestController.testTokenValidation()
+
+
+
 
 # Map static resources from the /public folder to the /assets URL path
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)

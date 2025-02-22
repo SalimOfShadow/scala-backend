@@ -8,7 +8,8 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
-  val config: Config = ConfigFactory.load() // or if in an actor, context.system.config
+  val config: Config =
+    ConfigFactory.load() // or if in an actor, context.system.config
   private val expirationConfig = config.getString("redis.expirationTime").toInt
   private val redisPool = new RedisClientPool("localhost", 6379)
 
@@ -35,11 +36,8 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
 
   def deleteSession(userId: Int): Future[Boolean] = Future {
     redisPool.withClient { client =>
-      val result = client.del(s"session:$userId")
-      result match {
-        case Some(value) => value > 0
-        case None => false
-      }
+      val result = client.del(s"session:$userId").exists(res => res > 0)
+      result
     }
   }
 }

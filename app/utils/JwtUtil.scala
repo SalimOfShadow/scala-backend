@@ -1,11 +1,15 @@
 package utils
 import com.typesafe.config.{Config, ConfigFactory}
+import pdi.jwt.JwtAlgorithm.HS256
 import pdi.jwt.{Jwt, JwtAlgorithm, JwtClaim}
 import play.api.libs.json.Json
+import utils.ConsoleMessage.logMessage
 
 import java.time.Instant
 
-object JwtUtil extends App {
+object JwtUtil {
+  val config: Config =
+    ConfigFactory.load()
 
   private val secretKey = config.getString("jwt.secret")
   private val expirationTime =
@@ -20,13 +24,13 @@ object JwtUtil extends App {
   ): String = {
     val claim = JwtClaim(
       content = Json.obj("userId" -> userId, "username" -> username).toString,
-      expiration = Some(Instant.now.getEpochSecond + 20)
+      expiration = Some(Instant.now.getEpochSecond + expirationTime)
     )
-    Jwt.encode(claim, secretKey, algo)
+    logMessage(claim)
+    Jwt.encode(claim, secretKey, HS256)
   }
 
   def validateToken(token: String): Option[JwtClaim] = {
     Jwt.decode(token, secretKey, Seq(algo)).toOption
   }
-
 }

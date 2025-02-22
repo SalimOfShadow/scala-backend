@@ -10,6 +10,6 @@ object RetrieveSystemConfigs {
     val jwtPwds = sys.env.getOrElse("SECRET_KEY", "")
 //    sys.env.getOrElse(envVariable, defaultValue)
 //    if (!is_valid(statement)) Left("syntax is not valid") else Right(())
-
+???
   }
 }
