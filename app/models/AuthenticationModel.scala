@@ -1,5 +1,7 @@
 package models
 
+import com.typesafe.config.{Config, ConfigFactory}
+import models.users.User
 import org.mindrot.jbcrypt.BCrypt
 import org.postgresql.util.PSQLException
 import play.api.db.slick.DatabaseConfigProvider
@@ -16,6 +18,11 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
     implicit ec: ExecutionContext
 ) {
 
+  // Get the secrets
+  private val config: Config =
+    ConfigFactory.load()
+  private val secretKey = config.getString("settings.secret")
+
   // Get the database configuration
   private val dbConfig = dbConfigProvider.get[PostgresProfile]
   import dbConfig._
@@ -24,11 +31,42 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
   // Reference to the Users table from generated code
   val Users = Tables.Users
 
-  def validateUser(username: String, password: String): Future[Boolean] = {
+  private def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
+    val emptyUser = new User(0, "", "", "", None, None, None)
     db.run(
       Users
         .filter(userRow =>
-          userRow.username === username && userRow.passwordHash === password
+          userRow.username === usernameOrEmail || userRow.email === usernameOrEmail
+        )
+        .result
+    ).map { users =>
+      users.headOption
+        .map(user =>
+          new User(
+            user.id,
+            user.username,
+            user.email,
+            user.passwordHash,
+            user.verified,
+            user.createdAt,
+            user.lastSeen
+          )
+        )
+        .getOrElse(emptyUser)
+    }.recover { case e: Throwable =>
+      println(s"An error occurred: ${e.getMessage}")
+      emptyUser
+    }
+  }
+
+  private def validateUser(
+      usernameOrEmail: String,
+      hashedPassword: String
+  ): Future[Boolean] = {
+    db.run(
+      Users
+        .filter(userRow =>
+          userRow.username === usernameOrEmail && userRow.passwordHash === hashedPassword || userRow.email === usernameOrEmail && userRow.passwordHash === hashedPassword
         )
         .result
     ).map(_.nonEmpty)
@@ -69,8 +107,16 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       }
   }
 
-  def loginUser(usernameOrEmail: String,password: String) = {
-    ???
+  def loginUser(usernameOrEmail: String, password: String): Future[Boolean] = {
+    val userToLogin = retrieveUserInfo(usernameOrEmail)
+
+    // TODO - Before i call this, i would need to extract the Future[User] from userToLogin
+    val loginResult = validateUser(usernameOrEmail, password).map(isValid =>
+      if (isValid) {
+
+        true
+      } else false
+    )
   }
 
   def getAllUsers: Future[Seq[(Int, String, String)]] = {
@@ -83,6 +129,5 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       Seq()
     }
   }
-
 
 }

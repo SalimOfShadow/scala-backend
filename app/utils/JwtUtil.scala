@@ -8,7 +8,7 @@ import utils.ConsoleMessage.logMessage
 import java.time.Instant
 
 object JwtUtil {
-  val config: Config =
+  private val config: Config =
     ConfigFactory.load()
 
   private val secretKey = config.getString("jwt.secret")
