@@ -4,16 +4,17 @@
 # ~~~~
 
 # An example controller showing a sample home page
-GET     /                           controllers.HomeController.index()
+GET     /                               controllers.HomeController.index()
 
 +nocsrf
-POST    /create-user                controllers.UserController.createUser()
+POST    /create-user                    controllers.UserController.createUser()
++nocsrf
+POST    /login-user                     controllers.UserController.loginUser()
 
 # TEST - Sessions
-GET    /test/getSession                  controllers.TestController.testSession()
+GET    /test/insertSession               controllers.TestController.testStoreSession()
+GET    /test/retrieveSession             controllers.TestController.testSessionRetrieval()
 GET    /test/getAllSession               controllers.TestController.testAllSession()
-GET    /test/insertSession               controllers.TestController.testConnection()
-GET    /test/print                       controllers.TestController.testPrintSecrets()
 
 # TEST - JWT
 GET    /test/createToken                 controllers.TestController.testTokenCreationAndExpiry()
@@ -23,4 +24,4 @@ GET    /test/validateToken               controllers.TestController.testTokenVal
 
 
 # Map static resources from the /public folder to the /assets URL path
-GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
+GET     /assets/*file                    controllers.Assets.versioned(path="/public", file: Asset)

@@ -18,9 +18,6 @@ class TestController @Inject() (
 )(implicit ec: ExecutionContext)
     extends AbstractController(cc) {
 
-  /** GET /test
-    * Logs and returns all users from the database.
-    */
   def testConnection(): Action[AnyContent] = Action.async { implicit request =>
     authModel.getAllUsers.map { users =>
       println(s"Users: $users")
@@ -31,10 +28,17 @@ class TestController @Inject() (
     }
   }
 
-  def testSession(): Action[AnyContent] = Action.async { implicit request =>
-    val result = sessionModel.storeSession(12345, "Token")
+  def testStoreSession(): Action[AnyContent] = Action.async { implicit request =>
+    val result = sessionModel.storeSession(12345, "Example Session Token")
     result.onComplete(result => logMessage(result.toString))
-    Future.successful(Ok(s"result"))
+    Future.successful(Ok(result.toString))
+  }
+
+  def testSessionRetrieval(): Action[AnyContent] = Action.async {
+    implicit request =>
+      val result = sessionModel.getSession(12345)
+      result.onComplete(result => logMessage(result.get))
+      Future.successful(Ok(result.toString))
   }
 
   def testAllSession(): Action[AnyContent] = Action.async { implicit request =>
@@ -43,13 +47,6 @@ class TestController @Inject() (
     Future.successful(Ok(s"result"))
   }
 
-  def testPrintSecrets(): Action[AnyContent] = Action.async {
-    implicit request =>
-      val secret = configuration.underlying.getString("jwt.secret")
-      Future.successful(
-        Ok(secret)
-      )
-  }
 
   def testTokenCreationAndExpiry(): Action[AnyContent] = Action.async {
     implicit request =>
@@ -73,6 +70,5 @@ class TestController @Inject() (
       )
 
   }
-
 
 }

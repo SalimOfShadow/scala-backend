@@ -28,9 +28,17 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
       client.get(s"session:$userId")
     }
   }
+
   def getAllSession: Future[Option[String]] = Future {
     redisPool.withClient { client =>
       client.get(s"session:12345")
+    }
+  }
+
+  def compareSessionToken(userId: Int, token: String): Future[Boolean] = {
+    getSession(userId).map {
+      case Some(storedToken) => storedToken == token
+      case None              => false
     }
   }
 

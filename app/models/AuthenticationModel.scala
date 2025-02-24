@@ -1,6 +1,7 @@
 package models
 
 import com.typesafe.config.{Config, ConfigFactory}
+import database.config.Tables
 import models.users.User
 import org.mindrot.jbcrypt.BCrypt
 import org.postgresql.util.PSQLException
@@ -9,13 +10,17 @@ import play.api.mvc.Result
 import play.api.mvc.Results.{Conflict, InternalServerError, Ok}
 import slick.jdbc.PostgresProfile
 import utils.ConsoleMessage.logMessage
+import utils.JwtUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
-class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
-    implicit ec: ExecutionContext
+class AuthenticationModel @Inject() (
+    dbConfigProvider: DatabaseConfigProvider,
+    sessionModel: SessionModel
+)(implicit
+    ec: ExecutionContext
 ) {
 
   // Get the secrets
@@ -32,7 +37,7 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
   val Users = Tables.Users
 
   private def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
-    val emptyUser = new User(0, "", "", "", None, None, None)
+    val emptyUser = new User(-1, "", "", "", "", None, None, None)
     db.run(
       Users
         .filter(userRow =>
@@ -47,6 +52,7 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
             user.username,
             user.email,
             user.passwordHash,
+            user.passwordSalt,
             user.verified,
             user.createdAt,
             user.lastSeen
@@ -82,12 +88,15 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       password: String
   ): Future[Result] = {
     val salt = BCrypt.gensalt()
+    logMessage(salt)
+    logMessage(salt.length)
     val hashedPassword = BCrypt.hashpw(password, salt)
     val newUser = Tables.UsersRow(
       0,
       username,
       email,
       hashedPassword,
+      salt,
       Some(false),
       None,
       None
@@ -107,20 +116,46 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
       }
   }
 
-  def loginUser(usernameOrEmail: String, password: String): Future[Boolean] = {
+  def loginUser(
+      usernameOrEmail: String,
+      password: String
+  ): Future[Option[String]] = {
     val userToLogin = retrieveUserInfo(usernameOrEmail)
 
-    val loginResult =userToLogin.map(user =>
+    userToLogin.flatMap { user =>
+      val hashedPassword = BCrypt.hashpw(password, user.passwordSalt)
 
+      validateUser(user.email, hashedPassword).flatMap { isValid =>
+        if (!isValid) {
+          logMessage("Incorrect credentials")
+          Future.successful(None)
+        } else {
+          sessionModel.getSession(user.id).flatMap {
 
-    )
-    // TODO - Before i call this, i would need to extract the Future[User] from userToLogin
-    val loginResultt = validateUser(usernameOrEmail, password).map(isValid =>
-      if (isValid) {
+            case Some(existingToken) =>
+              logMessage(
+                s"User ${user.username} is already logged in. Returning existing token $existingToken."
+              )
+              Future.successful(Some(existingToken))
 
-        true
-      } else false
-    )
+            case None =>
+              //If there is no session, create a new one and return the token
+              val newToken = JwtUtil.createToken(user.id, user.username)
+              sessionModel.storeSession(user.id, newToken).map { stored =>
+                if (stored) {
+                  logMessage(
+                    s"New session created for user ${user.id}. Issuing token: $newToken"
+                  )
+                  Some(newToken)
+                } else {
+                  logMessage(s"Failed to store session for user ${user.id}")
+                  None
+                }
+              }
+          }
+        }
+      }
+    }
   }
 
   def getAllUsers: Future[Seq[(Int, String, String)]] = {

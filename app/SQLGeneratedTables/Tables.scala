@@ -1,5 +1,4 @@
-package SQLGeneratedTables
-
+package database.config
 // AUTO-GENERATED Slick data model
 /** Stand-alone Slick data model for immediate use */
 object Tables extends Tables {
@@ -10,6 +9,7 @@ object Tables extends Tables {
 trait Tables {
   val profile: slick.jdbc.JdbcProfile
   import profile.api._
+  import slick.model.ForeignKeyAction
   // NOTE: GetResult mappers for plain SQL are only generated for
   // tables where Slick knows how to map the types of all columns.
   import slick.jdbc.{GetResult => GR}
@@ -22,7 +22,7 @@ trait Tables {
    *  @param username Database column username SqlType(varchar), Length(20,true)
    *  @param email Database column email SqlType(varchar), Length(300,true)
    *  @param passwordHash Database column password_hash SqlType(varchar), Length(200,true)
-   *  @param passwordSalt Database column password_salt SqlType(varchar), Length(16,true)
+   *  @param passwordSalt Database column password_salt SqlType(varchar), Length(29,true)
    *  @param verified Database column verified SqlType(bool), Default(Some(false))
    *  @param createdAt Database column created_at SqlType(timestamp)
    *  @param lastSeen Database column last_seen SqlType(timestamp) */
@@ -46,8 +46,8 @@ trait Tables {
     val email: Rep[String] = column[String]("email", O.Length(300,varying=true))
     /** Database column password_hash SqlType(varchar), Length(200,true) */
     val passwordHash: Rep[String] = column[String]("password_hash", O.Length(200,varying=true))
-    /** Database column password_salt SqlType(varchar), Length(16,true) */
-    val passwordSalt: Rep[String] = column[String]("password_salt", O.Length(16,varying=true))
+    /** Database column password_salt SqlType(varchar), Length(29,true) */
+    val passwordSalt: Rep[String] = column[String]("password_salt", O.Length(29,varying=true))
     /** Database column verified SqlType(bool), Default(Some(false)) */
     val verified: Rep[Option[Boolean]] = column[Option[Boolean]]("verified", O.Default(Some(false)))
     /** Database column created_at SqlType(timestamp) */
