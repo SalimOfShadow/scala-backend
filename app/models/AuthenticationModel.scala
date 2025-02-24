@@ -110,8 +110,12 @@ class AuthenticationModel @Inject() (dbConfigProvider: DatabaseConfigProvider)(
   def loginUser(usernameOrEmail: String, password: String): Future[Boolean] = {
     val userToLogin = retrieveUserInfo(usernameOrEmail)
 
+    val loginResult =userToLogin.map(user =>
+
+
+    )
     // TODO - Before i call this, i would need to extract the Future[User] from userToLogin
-    val loginResult = validateUser(usernameOrEmail, password).map(isValid =>
+    val loginResultt = validateUser(usernameOrEmail, password).map(isValid =>
       if (isValid) {
 
         true
