@@ -28,26 +28,33 @@ class TestController @Inject() (
     }
   }
 
-  def testStoreSession(): Action[AnyContent] = Action.async { implicit request =>
-    val result = sessionModel.storeSession(12345, "Example Session Token")
-    result.onComplete(result => logMessage(result.toString))
-    Future.successful(Ok(result.toString))
+  def testStoreSession(): Action[AnyContent] = Action.async {
+    implicit request =>
+      val result =
+        sessionModel.storeSession(12345, "examplusername", "example@email.com")
+      result.onComplete(result => logMessage(result.toString))
+      Future.successful(Ok(result.toString))
   }
 
   def testSessionRetrieval(): Action[AnyContent] = Action.async {
     implicit request =>
-      val result = sessionModel.getSession(12345)
+      val result = sessionModel.getSession(1)
       result.onComplete(result => logMessage(result.get))
       Future.successful(Ok(result.toString))
   }
 
   def testAllSession(): Action[AnyContent] = Action.async { implicit request =>
-    val result = sessionModel.getAllSession
+    val result = sessionModel.getAllSessions
     result.onComplete(result => logMessage(result.toString))
     Future.successful(Ok(s"result"))
   }
 
-
+  def testDeleteSession(): Action[AnyContent] = Action.async {
+    implicit request =>
+      val result = sessionModel.deleteSession(1)
+      result.onComplete(result => logMessage(result.toString))
+      Future.successful(Ok(s"result"))
+  }
   def testTokenCreationAndExpiry(): Action[AnyContent] = Action.async {
     implicit request =>
       val token = createToken(1, "testUser")

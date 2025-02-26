@@ -15,6 +15,7 @@ POST    /login-user                     controllers.UserController.loginUser()
 GET    /test/insertSession               controllers.TestController.testStoreSession()
 GET    /test/retrieveSession             controllers.TestController.testSessionRetrieval()
 GET    /test/getAllSession               controllers.TestController.testAllSession()
+GET    /test/deleteSession               controllers.TestController.testDeleteSession()
 
 # TEST - JWT
 GET    /test/createToken                 controllers.TestController.testTokenCreationAndExpiry()

@@ -10,7 +10,6 @@ import play.api.mvc.Result
 import play.api.mvc.Results.{Conflict, InternalServerError, Ok}
 import slick.jdbc.PostgresProfile
 import utils.ConsoleMessage.logMessage
-import utils.JwtUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -132,26 +131,28 @@ class AuthenticationModel @Inject() (
         } else {
           sessionModel.getSession(user.id).flatMap {
 
-            case Some(existingToken) =>
+            case Some(existingSession) if existingSession.nonEmpty =>
               logMessage(
-                s"User ${user.username} is already logged in. Returning existing token $existingToken."
+                s"User ${user.username} is already logged in. Returning existing redis data :  $existingSession."
               )
-              Future.successful(Some(existingToken))
+              Future.successful(Some(existingSession.headOption.head._1))
 
-            case None =>
-              //If there is no session, create a new one and return the token
-              val newToken = JwtUtil.createToken(user.id, user.username)
-              sessionModel.storeSession(user.id, newToken).map { stored =>
-                if (stored) {
-                  logMessage(
-                    s"New session created for user ${user.id}. Issuing token: $newToken"
-                  )
-                  Some(newToken)
-                } else {
-                  logMessage(s"Failed to store session for user ${user.id}")
-                  None
+            case _ =>
+              //If there is no session, create a new one
+              // TODO - test if the session is invalidated properly after it exprires...Do the same for the JWT
+              sessionModel
+                .storeSession(user.id, user.username, user.email)
+                .map { storedSuccessfully =>
+                  if (storedSuccessfully) {
+                    logMessage(
+                      s"New session created for user ${user.id}."
+                    )
+                    Some(s"New session created for user ${user.id}.")
+                  } else {
+                    logMessage(s"Failed to store session for user ${user.id}")
+                    None
+                  }
                 }
-              }
           }
         }
       }

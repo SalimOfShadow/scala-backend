@@ -18,6 +18,8 @@ object JwtUtil {
       .toInt // token should expire in  1 day
   private val algo = JwtAlgorithm.HS256
 
+  // TODO - implement JWT caching ( https://www.reddit.com/r/webdev/comments/d8baek/storing_jwt_in_redis/ )
+
   def createToken(
       userId: Int,
       username: String

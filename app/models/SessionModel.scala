@@ -8,43 +8,66 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
-  val config: Config =
-    ConfigFactory.load() // or if in an actor, context.system.config
-  private val expirationConfig = config.getString("redis.expirationTime").toInt
-  private val redisPool = new RedisClientPool("localhost", 6379)
+  val config: Config = ConfigFactory.load()
+//  private val expirationConfig = config.getString("redis.expirationTime").toInt
+
+  private val expirationTime = 40
+  protected val redisPool = new RedisClientPool("localhost", 6379)
 
   def storeSession(
       userId: Int,
-      sessionToken: String,
-      expiration: Int = expirationConfig
+      username: String,
+      email: String
   ): Future[Boolean] = Future {
+    val sessionKey = s"session:$userId"
+    val sessionData = Map(
+      "userId" -> userId.toString,
+      "username" -> username,
+      "email" -> email,
+    )
     redisPool.withClient { client =>
-      client.setex(s"session:$userId", expiration, sessionToken)
+      val setResult = client.hmset(sessionKey, sessionData)
+      if (setResult) {
+        client.expire(sessionKey, expirationTime)
+      }
+      setResult
     }
   }
 
-  def getSession(userId: Int): Future[Option[String]] = Future {
+  def getSession(userId: Int): Future[Option[Map[String, String]]] = Future {
     redisPool.withClient { client =>
-      client.get(s"session:$userId")
+      val fetchedUser = client.hgetall(s"session:$userId")
+      refreshSession(userId)
+      fetchedUser
     }
   }
 
-  def getAllSession: Future[Option[String]] = Future {
+  def getAllSessions: Future[Option[String]] = Future {
     redisPool.withClient { client =>
-      client.get(s"session:12345")
+      client.get(s"session:1")
     }
   }
 
-  def compareSessionToken(userId: Int, token: String): Future[Boolean] = {
-    getSession(userId).map {
-      case Some(storedToken) => storedToken == token
-      case None              => false
+  private def refreshSession(userId: Int): Future[Boolean] = Future {
+    val sessionKey = s"session:$userId"
+
+    redisPool.withClient { client =>
+      val result = client.expire(sessionKey, expirationTime)
+      result
     }
   }
+
+//  /** Compares a session token for authentication */
+//  def compareSessionToken(userId: Int, token: String): Future[Boolean] = {
+//    getSession(userId).map {
+//      case Some(storedToken) => storedToken == token
+//      case None              => false
+//    }
+//  }
 
   def deleteSession(userId: Int): Future[Boolean] = Future {
     redisPool.withClient { client =>
-      val result = client.del(s"session:$userId").exists(res => res > 0)
+      val result = client.del(s"session:$userId").exists(_ > 0)
       result
     }
   }

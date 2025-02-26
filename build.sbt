@@ -21,6 +21,7 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.7.4",
   "com.typesafe.slick" %% "slick-hikaricp" % "3.5.2",
   "org.mindrot" % "jbcrypt" % "0.4",
+  "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
   "net.debasishg" %% "redisclient" % "3.42",
     "com.github.jwt-scala" %% "jwt-play-json" % "10.0.1"
 )
