@@ -6,8 +6,9 @@ import play.api.libs.json.Json
 import utils.ConsoleMessage.logMessage
 
 import java.time.Instant
+import scala.util.{Failure, Success}
 
-object JwtUtil {
+object JwtUtil extends App {
   private val config: Config =
     ConfigFactory.load()
 
@@ -26,13 +27,40 @@ object JwtUtil {
   ): String = {
     val claim = JwtClaim(
       content = Json.obj("userId" -> userId, "username" -> username).toString,
-      expiration = Some(Instant.now.getEpochSecond + expirationTime)
+      expiration = Some(Instant.now.getEpochSecond + 10)
     )
     logMessage(claim)
     Jwt.encode(claim, secretKey, HS256)
   }
 
   def validateToken(token: String): Option[JwtClaim] = {
-    Jwt.decode(token, secretKey, Seq(algo)).toOption
+    val decodedJwt = Jwt.decode(token, secretKey, Seq(algo)).toOption
+    logMessage(decodedJwt)
+
+    val payload = {
+      decodedJwt.map(claim => Json.parse(claim.content))
+    }
+
+    val userId = payload.flatMap(json => (json \ "userId").asOpt[String])
+    val username = payload.flatMap(json => (json \ "username").asOpt[String])
+
+    println(decodedJwt)
+    println(userId)
+    decodedJwt
+  }
+  // If the token has expired, we extract the payload and perform a redis lookup
+  def extractFieldsFromExpiredToken(token: String): Option[(String, String)] = {
+    Jwt.decodeRawAll(token) match {
+      case Success((header, payload, signature)) =>
+        val jsonPayload = Json.parse(payload)
+        val userId = (jsonPayload \ "userId").asOpt[String]
+        val username = (jsonPayload \ "username").asOpt[String]
+        (userId, username) match {
+          case (Some(id), Some(username)) => Some(id, username)
+          case _                          => None
+        }
+      case Failure(_) =>
+        None
+    }
   }
 }

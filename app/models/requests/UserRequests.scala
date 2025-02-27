@@ -2,6 +2,8 @@ package models.requests
 
 import play.api.libs.json.{Json, OFormat}
 
+// This seems like a perfect use case for Protobuf
+
 // A sealed trait to capture all possible user requests
 sealed trait UserRequest
 

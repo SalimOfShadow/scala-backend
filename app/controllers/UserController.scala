@@ -77,8 +77,20 @@ class UserController @Inject() (
                 loginReq.password
               )
               .flatMap {
-                case Some(value) =>
-                  Future.successful(Ok(value)) // Return 200 OK with JWT token
+                case Some(jwt) =>
+                  val jwtCookie = new Cookie(
+                    "session",
+                    jwt,
+                    maxAge = Some(60 * 60 * 24),
+                    httpOnly = true,
+                    secure = false,
+                    domain = None,
+                    path = "/"
+                  )
+
+                  Future.successful(
+                    Ok("Successfully logged in").withCookies(jwtCookie)
+                  ) // Return 200 OK with JWT token
                 case None =>
                   Future.successful(
                     InternalServerError(
