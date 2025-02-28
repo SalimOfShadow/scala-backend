@@ -10,6 +10,7 @@ import play.api.mvc.Result
 import play.api.mvc.Results.{Conflict, InternalServerError, Ok}
 import slick.jdbc.PostgresProfile
 import utils.ConsoleMessage.logMessage
+import utils.JwtUtil
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -133,13 +134,16 @@ class AuthenticationModel @Inject() (
 
             case Some(existingSession) if existingSession.nonEmpty =>
               logMessage(
-                s"User ${user.username} is already logged in. Returning existing redis data :  $existingSession."
+                s"User ${user.username} is already logged in. Issuing a new token..."
               )
-              Future.successful(Some(existingSession.headOption.head._1))
+              // If the user is already logged in,we create a new JWT and give it back to him
+              val userId = existingSession.getOrElse("userId", "")
+              val username = existingSession.getOrElse("username", "")
+              val newJwtToken = JwtUtil.createToken(userId.toInt, username)
+              Future.successful(Some(newJwtToken))
 
             case _ =>
               //If there is no session, create a new one
-              // TODO - test if the session is invalidated properly after it exprires...Do the same for the JWT
               sessionModel
                 .storeSession(user.id, user.username, user.email)
                 .map { storedSuccessfully =>
@@ -147,7 +151,10 @@ class AuthenticationModel @Inject() (
                     logMessage(
                       s"New session created for user ${user.id}."
                     )
-                    Some(s"New session created for user ${user.id}.")
+                    // Same if it isn't already logged in,we still create a new JWT, and we still give it back to him
+                    val newJwtToken =
+                      JwtUtil.createToken(user.id, user.username)
+                    Some(newJwtToken)
                   } else {
                     logMessage(s"Failed to store session for user ${user.id}")
                     None

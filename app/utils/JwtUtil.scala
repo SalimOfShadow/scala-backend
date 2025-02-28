@@ -8,7 +8,7 @@ import utils.ConsoleMessage.logMessage
 import java.time.Instant
 import scala.util.{Failure, Success}
 
-object JwtUtil extends App {
+object JwtUtil {
   private val config: Config =
     ConfigFactory.load()
 
@@ -29,8 +29,8 @@ object JwtUtil extends App {
       content = Json.obj("userId" -> userId, "username" -> username).toString,
       expiration = Some(Instant.now.getEpochSecond + 10)
     )
-    logMessage(claim)
-    Jwt.encode(claim, secretKey, HS256)
+    val encodedJwtToken = Jwt.encode(claim, secretKey, HS256)
+    encodedJwtToken
   }
 
   def validateToken(token: String): Option[JwtClaim] = {
@@ -49,6 +49,7 @@ object JwtUtil extends App {
     decodedJwt
   }
   // If the token has expired, we extract the payload and perform a redis lookup
+  // TODO - Use this to validate the cookie from the client
   def extractFieldsFromExpiredToken(token: String): Option[(String, String)] = {
     Jwt.decodeRawAll(token) match {
       case Success((header, payload, signature)) =>

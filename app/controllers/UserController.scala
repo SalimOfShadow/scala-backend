@@ -78,16 +78,18 @@ class UserController @Inject() (
               )
               .flatMap {
                 case Some(jwt) =>
+                  val currentEnv =
+                    configuration.underlying.getString("settings.environment")
+                  val isSecure = currentEnv != "development"
                   val jwtCookie = new Cookie(
-                    "session",
-                    jwt,
+                    name = "session",
+                    value = jwt,
+                    path = "/",
                     maxAge = Some(60 * 60 * 24),
                     httpOnly = true,
-                    secure = false,
-                    domain = None,
-                    path = "/"
+                    secure = isSecure,
+                    domain = None
                   )
-
                   Future.successful(
                     Ok("Successfully logged in").withCookies(jwtCookie)
                   ) // Return 200 OK with JWT token
@@ -99,7 +101,7 @@ class UserController @Inject() (
                   ) // Handle empty result
               }
               .recover { case ex: Exception =>
-                logMessage(s"Error creating user: ${ex.getMessage}")
+                logMessage(s"Error login user: ${ex.getMessage}")
                 InternalServerError(
                   "Failed to login. Please check your credentials and try again."
                 )
