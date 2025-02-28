@@ -1,6 +1,5 @@
 package controllers
-
-import actions.AuthorizedAction
+import actions.AuthenticatedAction
 import models.{AuthenticationModel, SessionModel}
 import play.api.mvc._
 import utils.ConsoleMessage.logMessage
@@ -14,7 +13,7 @@ class TestController @Inject() (
     cc: ControllerComponents,
     authModel: AuthenticationModel,
     sessionModel: SessionModel,
-    authorizedAction: AuthorizedAction,
+    authorizedAction: AuthenticatedAction,
     environment: play.api.Environment,
     configuration: play.api.Configuration
 )(implicit ec: ExecutionContext)
@@ -85,7 +84,8 @@ class TestController @Inject() (
 
   }
 
-  def testProtectedRoute = authorizedAction { request =>
-    Ok(s"Hello, ${request.userEmail}")
+  def testProtectedRoute(): Action[AnyContent] = authorizedAction {
+    implicit request =>
+      Ok("This is a protected route.")
   }
 }

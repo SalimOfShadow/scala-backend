@@ -23,7 +23,7 @@ GET    /test/validateToken               controllers.TestController.testTokenVal
 
 # TEST - Routes Guard
 +nocsrf
-POST    /test/testRouteProtection         controllers.TestController.testProtectedRoute()
+GET    /test/testRouteProtection         controllers.TestController.testProtectedRoute()
 
 
 # Map static resources from the /public folder to the /assets URL path

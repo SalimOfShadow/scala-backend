@@ -1,9 +1,10 @@
 package controllers
 
-import models.requests.{SignUpRequest, LoginRequest}
+import models.requests.{LoginRequest, SignUpRequest}
 import models.{AuthenticationModel, SessionModel}
 import play.api.libs.json.{JsError, JsSuccess, JsValue}
 import play.api.mvc._
+import play.mvc.Security.AuthenticatedAction
 import utils.ConsoleMessage.logMessage
 import utils.ValidateUser.{validateCreateInput, validateLoginInput}
 
@@ -13,6 +14,7 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class UserController @Inject() (
     cc: ControllerComponents,
+    authenticatedAction: AuthenticatedAction,
     authModel: AuthenticationModel,
     sessionModel: SessionModel,
     environment: play.api.Environment,
@@ -122,6 +124,8 @@ class UserController @Inject() (
           Future.successful(BadRequest("Invalid request body."))
       }
   }
+
+
 
   def logoutUser(): Action[JsValue] = Action.async(parse.json) {
     ???
