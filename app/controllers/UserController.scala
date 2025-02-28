@@ -82,7 +82,7 @@ class UserController @Inject() (
                     configuration.underlying.getString("settings.environment")
                   val isSecure = currentEnv != "development"
                   val jwtCookie = new Cookie(
-                    name = "session",
+                    name = "sessionToken",
                     value = jwt,
                     path = "/",
                     maxAge = Some(60 * 60 * 24),
@@ -90,8 +90,15 @@ class UserController @Inject() (
                     secure = isSecure,
                     domain = None
                   )
+                  val userInfoCookie = new Cookie(
+                    name = "userInfo",
+                    value = loginReq.usernameOrEmail,
+                    path = "/"
+                  )
+
                   Future.successful(
-                    Ok("Successfully logged in").withCookies(jwtCookie)
+                    Ok("Successfully logged in")
+                      .withCookies(jwtCookie, userInfoCookie)
                   ) // Return 200 OK with JWT token
                 case None =>
                   Future.successful(
@@ -114,5 +121,9 @@ class UserController @Inject() (
           logMessage(s"Invalid request body: $errors")
           Future.successful(BadRequest("Invalid request body."))
       }
+  }
+
+  def logoutUser(): Action[JsValue] = Action.async(parse.json) {
+    ???
   }
 }

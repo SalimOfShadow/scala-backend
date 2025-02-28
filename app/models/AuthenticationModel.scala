@@ -36,7 +36,7 @@ class AuthenticationModel @Inject() (
   // Reference to the Users table from generated code
   val Users = Tables.Users
 
-  private def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
+  def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
     val emptyUser = new User(-1, "", "", "", "", None, None, None)
     db.run(
       Users
@@ -131,29 +131,36 @@ class AuthenticationModel @Inject() (
           Future.successful(None)
         } else {
           sessionModel.getSession(user.id).flatMap {
-
             case Some(existingSession) if existingSession.nonEmpty =>
               logMessage(
                 s"User ${user.username} is already logged in. Issuing a new token..."
               )
-              // If the user is already logged in,we create a new JWT and give it back to him
-              val userId = existingSession.getOrElse("userId", "")
+              // If the user is already logged in,we create a new JWT,update the one on Redis and finally and return it
+              val userId = existingSession.getOrElse("userId", "").toInt
               val username = existingSession.getOrElse("username", "")
-              val newJwtToken = JwtUtil.createToken(userId.toInt, username)
-              Future.successful(Some(newJwtToken))
-
+              val newJwtToken = JwtUtil.createToken(userId, username)
+              sessionModel.updateLastJwtIssued(userId, newJwtToken).flatMap {
+                success =>
+                  if (success) {
+                    Future.successful(Some(newJwtToken))
+                  } else {
+                    logMessage("Failed to update JWT in Redis")
+                    Future.successful(None) // Or some other fallback behavior
+                  }
+              }
             case _ =>
+              // Here we create a new JWT, and we store it in Redis...API requests for a new token will be ignored if they don't match
+              val newJwtToken =
+                JwtUtil.createToken(user.id, user.username)
               //If there is no session, create a new one
               sessionModel
-                .storeSession(user.id, user.username, user.email)
+                .storeSession(user.id, user.username, user.email, newJwtToken)
                 .map { storedSuccessfully =>
                   if (storedSuccessfully) {
                     logMessage(
                       s"New session created for user ${user.id}."
                     )
                     // Same if it isn't already logged in,we still create a new JWT, and we still give it back to him
-                    val newJwtToken =
-                      JwtUtil.createToken(user.id, user.username)
                     Some(newJwtToken)
                   } else {
                     logMessage(s"Failed to store session for user ${user.id}")

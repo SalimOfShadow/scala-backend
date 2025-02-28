@@ -35,7 +35,7 @@ class SessionModelSpec extends AsyncWordSpec with Matchers with MockitoSugar {
     "deleteSession" should {
 
       "delete the session from Redis and return true" in {
-        sessionModel.storeSession(12345, "TEST", "testEmail")
+        sessionModel.storeSession(12345, "TEST", "testEmail", "jwt-example")
         sessionModel.deleteSession(12345).map { result =>
           result shouldBe true
         }

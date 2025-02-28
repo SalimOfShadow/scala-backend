@@ -17,13 +17,15 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
   def storeSession(
       userId: Int,
       username: String,
-      email: String
+      email: String,
+      jwtIssued: String
   ): Future[Boolean] = Future {
     val sessionKey = s"session:$userId"
     val sessionData = Map(
       "userId" -> userId.toString,
       "username" -> username,
       "email" -> email,
+      "last_jwt_issued" -> jwtIssued
     )
     redisPool.withClient { client =>
       val setResult = client.hmset(sessionKey, sessionData)
@@ -57,13 +59,26 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
     }
   }
 
-//  /** Compares a session token for authentication */
-//  def compareSessionToken(userId: Int, token: String): Future[Boolean] = {
-//    getSession(userId).map {
-//      case Some(storedToken) => storedToken == token
-//      case None              => false
-//    }
-//  }
+  def updateLastJwtIssued(userId: Int, newJwt: String): Future[Boolean] =
+    Future {
+      val sessionKey = s"session:$userId"
+      redisPool.withClient { client =>
+        if (client.exists(sessionKey)) {
+          client.hset(sessionKey, "last_jwt_issued", newJwt)
+          true
+        } else {
+          false // Session expired or doesn't exist
+        }
+      }
+    }
+
+  /** Compares a session token for authentication */
+  def compareSessionToken(userId: Int, token: String): Future[Boolean] = {
+    getSession(userId).map {
+      case Some(sessionData) => sessionData.get("last_jwt_issued").contains(token)
+      case None              => false
+    }
+  }
 
   def deleteSession(userId: Int): Future[Boolean] = Future {
     redisPool.withClient { client =>

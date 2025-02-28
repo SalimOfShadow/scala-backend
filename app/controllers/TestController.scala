@@ -1,5 +1,6 @@
 package controllers
 
+import actions.AuthorizedAction
 import models.{AuthenticationModel, SessionModel}
 import play.api.mvc._
 import utils.ConsoleMessage.logMessage
@@ -13,6 +14,7 @@ class TestController @Inject() (
     cc: ControllerComponents,
     authModel: AuthenticationModel,
     sessionModel: SessionModel,
+    authorizedAction: AuthorizedAction,
     environment: play.api.Environment,
     configuration: play.api.Configuration
 )(implicit ec: ExecutionContext)
@@ -31,7 +33,12 @@ class TestController @Inject() (
   def testStoreSession(): Action[AnyContent] = Action.async {
     implicit request =>
       val result =
-        sessionModel.storeSession(12345, "examplusername", "example@email.com")
+        sessionModel.storeSession(
+          12345,
+          "examplusername",
+          "example@email.com",
+          "example_jwt"
+        )
       result.onComplete(result => logMessage(result.toString))
       Future.successful(Ok(result.toString))
   }
@@ -78,4 +85,7 @@ class TestController @Inject() (
 
   }
 
+  def testProtectedRoute = authorizedAction { request =>
+    Ok(s"Hello, ${request.userEmail}")
+  }
 }
