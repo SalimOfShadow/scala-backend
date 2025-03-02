@@ -34,12 +34,10 @@ class SecureAction @Inject() (
             (jsonClaim \ "userId").asOpt[Int] match {
               case Some(userId) =>
                 Future.successful(
-                  Some(
-                    Ok(s"Successfully validate JWT for user ${userId.toString}")
-                  )
+                  None
                 ) // Authentication successful, continue request
               case None =>
-                logMessage("Invalid token: userId missing.")
+                // UserId field missing, the token is invalid
                 Future.successful(Some(Redirect("/login")))
             }
 
@@ -58,6 +56,7 @@ class SecureAction @Inject() (
                       val newJwtToken = createToken(userId, username)
                       sessionModel.updateLastJwtIssued(userId, newJwtToken)
                       val newJwtCookie = issueJwtCookie(config, newJwtToken)
+                      // TODO - MAKE IT SO THE REQUEST GOES THROUGH INSTEAD OF RETURNING A 200 OK
                       Future.successful(
                         Some(Ok("Token refreshed").withCookies(newJwtCookie))
                       )

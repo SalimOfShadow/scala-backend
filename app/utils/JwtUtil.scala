@@ -14,10 +14,11 @@ object JwtUtil {
     ConfigFactory.load()
 
   private val secretKey = config.getString("jwt.secret")
-  private val expirationTime =
-    config
-      .getString("jwt.expirationTime")
-      .toInt // token should expire in  15 minutes
+  private val expirationTime = 10
+//      private val expirationTime =
+//    config
+//      .getString("jwt.expirationTime")
+//      .toInt // token should expire in  15 minutes
   private val algo = JwtAlgorithm.HS256
 
   // TODO - implement JWT caching ( https://www.reddit.com/r/webdev/comments/d8baek/storing_jwt_in_redis/ )
