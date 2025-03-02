@@ -20,10 +20,11 @@ GET    /test/deleteSession               controllers.TestController.testDeleteSe
 # TEST - JWT
 GET    /test/createToken                 controllers.TestController.testTokenCreationAndExpiry()
 GET    /test/validateToken               controllers.TestController.testTokenValidation()
+GET    /test/compareToken               controllers.TestController.testTokenComparisonWithRedis()
 
 # TEST - Routes Guard
 +nocsrf
-GET    /test/testRouteProtection         controllers.TestController.testProtectedRoute()
+GET    /test/routeProtection         controllers.TestController.testProtectedRoute()
 
 
 # Map static resources from the /public folder to the /assets URL path

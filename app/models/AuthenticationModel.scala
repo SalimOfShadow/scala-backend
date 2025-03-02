@@ -142,6 +142,7 @@ class AuthenticationModel @Inject() (
               sessionModel.updateLastJwtIssued(userId, newJwtToken).flatMap {
                 success =>
                   if (success) {
+                    logMessage("Successfully updated JWT in Redis")
                     Future.successful(Some(newJwtToken))
                   } else {
                     logMessage("Failed to update JWT in Redis")

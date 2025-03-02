@@ -1,11 +1,12 @@
 package controllers
 
+import actions.SecureAction
 import models.requests.{LoginRequest, SignUpRequest}
 import models.{AuthenticationModel, SessionModel}
 import play.api.libs.json.{JsError, JsSuccess, JsValue}
 import play.api.mvc._
-import play.mvc.Security.AuthenticatedAction
 import utils.ConsoleMessage.logMessage
+import utils.JwtUtil.issueJwtCookie
 import utils.ValidateUser.{validateCreateInput, validateLoginInput}
 
 import javax.inject._
@@ -14,13 +15,18 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class UserController @Inject() (
     cc: ControllerComponents,
-    authenticatedAction: AuthenticatedAction,
+    secureAction: SecureAction,
     authModel: AuthenticationModel,
     sessionModel: SessionModel,
     environment: play.api.Environment,
     configuration: play.api.Configuration
 )(implicit ec: ExecutionContext)
     extends AbstractController(cc) {
+
+  def protectedEndpoint: Action[AnyContent] = secureAction { request: Request[AnyContent] =>
+    Ok("Access granted to protected resource.")
+  }
+
 
   /** POST /create-user
     * Expects JSON with "username", "email" and "password".
@@ -80,27 +86,10 @@ class UserController @Inject() (
               )
               .flatMap {
                 case Some(jwt) =>
-                  val currentEnv =
-                    configuration.underlying.getString("settings.environment")
-                  val isSecure = currentEnv != "development"
-                  val jwtCookie = new Cookie(
-                    name = "sessionToken",
-                    value = jwt,
-                    path = "/",
-                    maxAge = Some(60 * 60 * 24),
-                    httpOnly = true,
-                    secure = isSecure,
-                    domain = None
-                  )
-                  val userInfoCookie = new Cookie(
-                    name = "userInfo",
-                    value = loginReq.usernameOrEmail,
-                    path = "/"
-                  )
-
+                  val jwtCookie: Cookie = issueJwtCookie(configuration, jwt)
                   Future.successful(
                     Ok("Successfully logged in")
-                      .withCookies(jwtCookie, userInfoCookie)
+                      .withCookies(jwtCookie)
                   ) // Return 200 OK with JWT token
                 case None =>
                   Future.successful(
@@ -125,9 +114,9 @@ class UserController @Inject() (
       }
   }
 
-
-
   def logoutUser(): Action[JsValue] = Action.async(parse.json) {
     ???
   }
+
+
 }

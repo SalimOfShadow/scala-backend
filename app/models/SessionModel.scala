@@ -9,9 +9,9 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
   val config: Config = ConfigFactory.load()
-//  private val expirationConfig = config.getString("redis.expirationTime").toInt
+  private val expirationTime = config.getString("redis.expirationTime").toInt
 
-  private val expirationTime = 40
+//  private val expirationTime = 40
   protected val redisPool = new RedisClientPool("localhost", 6379)
 
   def storeSession(
@@ -75,8 +75,13 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
   /** Compares a session token for authentication */
   def compareSessionToken(userId: Int, token: String): Future[Boolean] = {
     getSession(userId).map {
-      case Some(sessionData) => sessionData.get("last_jwt_issued").contains(token)
-      case None              => false
+      case Some(sessionData) if sessionData.nonEmpty => {
+        sessionData.get("last_jwt_issued").contains(token)
+      }
+      case _ => {
+        print(s"comparison failed for user $userId")
+        false
+      }
     }
   }
 

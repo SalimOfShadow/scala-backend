@@ -1,5 +1,5 @@
 package controllers
-import actions.AuthenticatedAction
+import actions.{SecureAction}
 import models.{AuthenticationModel, SessionModel}
 import play.api.mvc._
 import utils.ConsoleMessage.logMessage
@@ -13,7 +13,7 @@ class TestController @Inject() (
     cc: ControllerComponents,
     authModel: AuthenticationModel,
     sessionModel: SessionModel,
-    authorizedAction: AuthenticatedAction,
+    secureAction: SecureAction,
     environment: play.api.Environment,
     configuration: play.api.Configuration
 )(implicit ec: ExecutionContext)
@@ -28,7 +28,7 @@ class TestController @Inject() (
       InternalServerError("Database connection error.")
     }
   }
-
+// -- SESSIONS --
   def testStoreSession(): Action[AnyContent] = Action.async {
     implicit request =>
       val result =
@@ -61,6 +61,8 @@ class TestController @Inject() (
       result.onComplete(result => logMessage(result.toString))
       Future.successful(Ok(s"result"))
   }
+
+  // -- TOKEN --
   def testTokenCreationAndExpiry(): Action[AnyContent] = Action.async {
     implicit request =>
       val token = createToken(1, "testUser")
@@ -84,7 +86,21 @@ class TestController @Inject() (
 
   }
 
-  def testProtectedRoute(): Action[AnyContent] = authorizedAction {
+  def testTokenComparisonWithRedis(): Action[AnyContent] = Action.async {
+    implicit request =>
+      val token =
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NDA5NDk1NjEsInVzZXJJZCI6MSwidXNlcm5hbWUiOiJ0ZXN0VXNlciJ9.55hDZ97g42eRTknxCPnvu_YP6C08jVpBk7MfTcBVapI"
+      val comparisonResult = sessionModel.compareSessionToken(1, token)
+
+      val result = comparisonResult.map(result => { logMessage(result) })
+
+      Future.successful(
+        Ok("result")
+      )
+
+  }
+
+  def testProtectedRoute(): Action[AnyContent] = secureAction {
     implicit request =>
       Ok("This is a protected route.")
   }
