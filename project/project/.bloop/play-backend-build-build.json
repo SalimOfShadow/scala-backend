@@ -1,16 +1,16 @@
 {
     "version": "1.4.0",
     "project": {
-        "name": "scala-backend-build-build",
-        "directory": "/home/salim/Desktop/Projects/scala-backend/project/project",
-        "workspaceDir": "/home/salim/Desktop/Projects/scala-backend/project/project",
+        "name": "play-backend-build-build",
+        "directory": "/home/salim/Desktop/Projects/play-backend/project/project",
+        "workspaceDir": "/home/salim/Desktop/Projects/play-backend/project/project",
         "sources": [
-            "/home/salim/Desktop/Projects/scala-backend/project/project/src/main/scala",
-            "/home/salim/Desktop/Projects/scala-backend/project/project/src/main/scala-2.12",
-            "/home/salim/Desktop/Projects/scala-backend/project/project/src/main/scala-2",
-            "/home/salim/Desktop/Projects/scala-backend/project/project/src/main/java",
-            "/home/salim/Desktop/Projects/scala-backend/project/project/src/main/scala-sbt-1.0",
-            "/home/salim/Desktop/Projects/scala-backend/project/project/target/scala-2.12/sbt-1.0/src_managed/main"
+            "/home/salim/Desktop/Projects/play-backend/project/project/src/main/scala",
+            "/home/salim/Desktop/Projects/play-backend/project/project/src/main/scala-2.12",
+            "/home/salim/Desktop/Projects/play-backend/project/project/src/main/scala-2",
+            "/home/salim/Desktop/Projects/play-backend/project/project/src/main/java",
+            "/home/salim/Desktop/Projects/play-backend/project/project/src/main/scala-sbt-1.0",
+            "/home/salim/Desktop/Projects/play-backend/project/project/target/scala-2.12/sbt-1.0/src_managed/main"
         ],
         "dependencies": [
             
@@ -104,11 +104,11 @@
             "/home/salim/.cache/coursier/v1/https/repo1.maven.org/maven2/org/reactivestreams/reactive-streams/1.0.3/reactive-streams-1.0.3.jar",
             "/home/salim/.cache/coursier/v1/https/repo1.maven.org/maven2/com/typesafe/config/1.4.2/config-1.4.2.jar"
         ],
-        "out": "/home/salim/Desktop/Projects/scala-backend/project/project/.bloop/scala-backend-build-build",
-        "classesDir": "/home/salim/Desktop/Projects/scala-backend/project/project/.bloop/scala-backend-build-build/scala-2.12/sbt-1.0/classes",
+        "out": "/home/salim/Desktop/Projects/play-backend/project/project/.bloop/play-backend-build-build",
+        "classesDir": "/home/salim/Desktop/Projects/play-backend/project/project/.bloop/play-backend-build-build/scala-2.12/sbt-1.0/classes",
         "resources": [
-            "/home/salim/Desktop/Projects/scala-backend/project/project/src/main/resources",
-            "/home/salim/Desktop/Projects/scala-backend/project/project/target/scala-2.12/sbt-1.0/resource_managed/main"
+            "/home/salim/Desktop/Projects/play-backend/project/project/src/main/resources",
+            "/home/salim/Desktop/Projects/play-backend/project/project/target/scala-2.12/sbt-1.0/resource_managed/main"
         ],
         "scala": {
             "organization": "org.scala-lang",
@@ -216,7 +216,7 @@
             "config": {
                 "home": "/usr/lib/jvm/java-11-openjdk-amd64",
                 "options": [
-                    "-Duser.dir=/home/salim/Desktop/Projects/scala-backend/project/project"
+                    "-Duser.dir=/home/salim/Desktop/Projects/play-backend/project/project"
                 ]
             },
             "mainClass": [
@@ -225,11 +225,11 @@
             "runtimeConfig": {
                 "home": "/usr/lib/jvm/java-11-openjdk-amd64",
                 "options": [
-                    "-Duser.dir=/home/salim/Desktop/Projects/scala-backend/project/project"
+                    "-Duser.dir=/home/salim/Desktop/Projects/play-backend/project/project"
                 ]
             },
             "classpath": [
-                "/home/salim/Desktop/Projects/scala-backend/project/project/.bloop/scala-backend-build-build/scala-2.12/sbt-1.0/classes",
+                "/home/salim/Desktop/Projects/play-backend/project/project/.bloop/play-backend-build-build/scala-2.12/sbt-1.0/classes",
                 "/home/salim/.cache/coursier/v1/https/repo1.maven.org/maven2/ch/epfl/scala/sbt-bloop_2.12_1.0/2.0.6/sbt-bloop_2.12_1.0-2.0.6.jar",
                 "/home/salim/.cache/coursier/v1/https/repo1.maven.org/maven2/ch/epfl/scala/bloop-config_2.12/2.1.0/bloop-config_2.12-2.1.0.jar",
                 "/home/salim/.cache/coursier/v1/https/repo1.maven.org/maven2/com/github/plokhotnyuk/jsoniter-scala/jsoniter-scala-core_2.12/2.30.14/jsoniter-scala-core_2.12-2.30.14.jar",

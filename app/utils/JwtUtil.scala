@@ -15,18 +15,18 @@ object JwtUtil {
 
   private val secretKey = config.getString("jwt.secret")
   private val expirationTime = 10
-//      private val expirationTime =
-//    config
-//      .getString("jwt.expirationTime")
-//      .toInt // token should expire in  15 minutes
+  //      private val expirationTime =
+  //    config
+  //      .getString("jwt.expirationTime")
+  //      .toInt // token should expire in  15 minutes
   private val algo = JwtAlgorithm.HS256
 
   // TODO - implement JWT caching ( https://www.reddit.com/r/webdev/comments/d8baek/storing_jwt_in_redis/ )
 
   def createToken(
-      userId: Int,
-      username: String
-  ): String = {
+                   userId: Int,
+                   username: String
+                 ): String = {
     val claim = JwtClaim(
       content = Json.obj("userId" -> userId, "username" -> username).toString,
       expiration = Some(Instant.now.getEpochSecond + expirationTime)
@@ -42,9 +42,9 @@ object JwtUtil {
   }
 
   def issueJwtCookie(
-      configuration: play.api.Configuration,
-      jwt: String
-  ): Cookie = {
+                      configuration: play.api.Configuration,
+                      jwt: String
+                    ): Cookie = {
     val currentEnv =
       configuration.underlying.getString("settings.environment")
     val isSecure = currentEnv != "development"
@@ -63,8 +63,8 @@ object JwtUtil {
   // If the token has expired, we extract the payload and perform a redis lookup
   // TODO - Use this to validate the cookie from the client
   def extractPayloadFromExpiredToken(
-      token: String
-  ): Option[(String, String)] = {
+                                      token: String
+                                    ): Option[(String, String)] = {
     Jwt.decodeRawAll(
       token,
       // This options allow decoding even if the token has expired
