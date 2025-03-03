@@ -28,6 +28,7 @@ class TestController @Inject() (
       InternalServerError("Database connection error.")
     }
   }
+
 // -- SESSIONS --
   def testStoreSession(): Action[AnyContent] = Action.async {
     implicit request =>
@@ -38,28 +39,52 @@ class TestController @Inject() (
           "example@email.com",
           "example_jwt"
         )
-      result.onComplete(result => logMessage(result.toString))
-      Future.successful(Ok(result.toString))
+      result.map {
+        case true  => Ok("Successfully stored a session on Redis")
+        case false => InternalServerError("500")
+      }
   }
 
   def testSessionRetrieval(): Action[AnyContent] = Action.async {
     implicit request =>
       val result = sessionModel.getSession(1)
-      result.onComplete(result => logMessage(result.get))
-      Future.successful(Ok(result.toString))
+      result.map {
+        case Some(value: Map[String, String]) if value.nonEmpty =>
+          Ok(
+            s"Successfully retrieved a session on Redis - $value"
+          )
+        case _ =>
+          InternalServerError("500")
+
+      }
   }
 
   def testAllSession(): Action[AnyContent] = Action.async { implicit request =>
     val result = sessionModel.getAllSessions
-    result.onComplete(result => logMessage(result.toString))
-    Future.successful(Ok(s"result"))
+    result.map {
+      case Some(value) if (value.nonEmpty) =>
+        Ok(
+          s"Successfully retrieved all the sessions on Redis - $value"
+        )
+      case _ =>
+        result.map(logMessage(_))
+        InternalServerError("Failed to retrieve all sessions on Redis")
+    }
   }
 
   def testDeleteSession(): Action[AnyContent] = Action.async {
     implicit request =>
       val result = sessionModel.deleteSession(1)
-      result.onComplete(result => logMessage(result.toString))
-      Future.successful(Ok(s"result"))
+      result.map {
+        case true =>
+          result.map(logMessage(_))
+          Ok(
+            s"Successfully deleted session on Redis"
+          )
+        case _ =>
+          result.map(logMessage(_))
+          InternalServerError("Failed to delete session on Redis")
+      }
   }
 
   // -- TOKEN --
@@ -78,25 +103,39 @@ class TestController @Inject() (
 
   def testTokenValidation(): Action[AnyContent] = Action.async {
     implicit request =>
-      val token = validateToken("asdjiojsasdjio")
-      logMessage(token)
-      Future.successful(
-        Ok(s"token ${token}")
+      // Some(JwtClaim({"userId":123,"username":"testingUsername"}, None, None, None, Some(2741041803), None, None, None))
+      val token = validateToken(
+        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjI3NDEwNDE4MDMsInVzZXJJZCI6MTIzLCJ1c2VybmFtZSI6InRlc3RpbmdVc2VybmFtZSJ9.kBv7V3h2kTUPJil3na-nrDJcFQmzGbRdW0MsO-JKIGE"
       )
+      token match {
+        case Some(value) =>
+          Future.successful(
+            Ok(s"Successfully validated this token :  ${token}")
+          )
+        case None =>
+          Future.successful(
+            InternalServerError(s"Token validation function failed.")
+          )
+      }
 
   }
 
   def testTokenComparisonWithRedis(): Action[AnyContent] = Action.async {
     implicit request =>
+      val userId = 12345
       val token =
-        "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NDA5NDk1NjEsInVzZXJJZCI6MSwidXNlcm5hbWUiOiJ0ZXN0VXNlciJ9.55hDZ97g42eRTknxCPnvu_YP6C08jVpBk7MfTcBVapI"
-      val comparisonResult = sessionModel.compareSessionToken(1, token)
+        "example_jwt"
+      val comparisonResult = sessionModel.compareSessionToken(userId, token)
 
-      val result = comparisonResult.map(result => { logMessage(result) })
+      comparisonResult.map {
+        case true =>
+          Ok("The provided token matches the one inside the Redis session")
 
-      Future.successful(
-        Ok("result")
-      )
+        case false =>
+          InternalServerError(
+            "Failed to compare the token with it's Redis counterpart"
+          )
+      }
 
   }
 

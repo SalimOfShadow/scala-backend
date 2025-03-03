@@ -44,9 +44,9 @@ class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
     }
   }
 
-  def getAllSessions: Future[Option[String]] = Future {
+  def getAllSessions: Future[Option[Map[String, String]]] = Future {
     redisPool.withClient { client =>
-      client.get(s"session:1")
+      client.hgetall(s"session:1") // TODO - FIX THIS
     }
   }
 
