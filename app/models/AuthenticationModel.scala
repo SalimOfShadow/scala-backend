@@ -36,7 +36,7 @@ class AuthenticationModel @Inject() (
   // Reference to the Users table from generated code
   val Users = Tables.Users
 
-  def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
+  private def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
     val emptyUser = new User(-1, "", "", "", "", None, None, None)
     db.run(
       Users
@@ -47,7 +47,7 @@ class AuthenticationModel @Inject() (
     ).map { users =>
       users.headOption
         .map(user =>
-          new User(
+           User(
             user.id,
             user.username,
             user.email,
@@ -88,8 +88,6 @@ class AuthenticationModel @Inject() (
       password: String
   ): Future[Result] = {
     val salt = BCrypt.gensalt()
-    logMessage(salt)
-    logMessage(salt.length)
     val hashedPassword = BCrypt.hashpw(password, salt)
     val newUser = Tables.UsersRow(
       0,
