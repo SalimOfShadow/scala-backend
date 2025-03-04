@@ -14,14 +14,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class UserController @Inject() (
-    cc: ControllerComponents,
-    secureAction: SecureAction,
-    authModel: AuthenticationModel,
-    sessionModel: SessionModel,
-    environment: play.api.Environment,
-    configuration: play.api.Configuration
-)(implicit ec: ExecutionContext)
-    extends AbstractController(cc) {
+                                 cc: ControllerComponents,
+                                 secureAction: SecureAction,
+                                 authModel: AuthenticationModel,
+                                 sessionModel: SessionModel,
+                                 environment: play.api.Environment,
+                                 configuration: play.api.Configuration
+                               )(implicit ec: ExecutionContext)
+  extends AbstractController(cc) {
 
   def protectedEndpoint: Action[AnyContent] = secureAction {
     request: Request[AnyContent] =>
@@ -29,9 +29,9 @@ class UserController @Inject() (
   }
 
   /** POST /create-user
-    * Expects JSON with "username", "email" and "password".
-    * Inserts a new user into the database
-    */
+   * Expects JSON with "username", "email" and "password".
+   * Inserts a new user into the database
+   */
   def createUser(): Action[JsValue] = Action.async(parse.json) {
     implicit request =>
       request.body.validate[SignUpRequest] match {
@@ -123,26 +123,28 @@ class UserController @Inject() (
             .flatMap(cookie =>
               if (cookie.value.nonEmpty) validateToken(cookie.value) else None
             )
+          val cookieToDiscard =
+            DiscardingCookie(name = "sessionToken", path = "/")
           val tokenContent =
             sessionToken.map(claim => Json.parse(claim.content))
           val userId =
             tokenContent
               .flatMap(content => (content \ "userId").asOpt[Int])
               .map(s => s)
-          val sessionRemovedFromRedis =
-            userId.map(id => sessionModel.deleteSession(id))
-          logMessage(tokenContent)
-          logMessage("tokenContent")
-          val cookieToDiscard =
-            DiscardingCookie(name = "sessionToken", path = "/")
-          Future.successful(
-            Redirect("/login", 200).discardingCookies(
-              cookieToDiscard
-            )
-          )
+          val redisSessionRemovalResult = userId match {
+            case Some(id) =>
+              sessionModel.deleteSession(id).map {
+                case true =>
+                  Redirect("/login", 302).discardingCookies(cookieToDiscard)
+                case false => InternalServerError("Failed to logout")
+              }
+            case None =>
+              Future.successful(InternalServerError("Failed to logout"))
+          }
+          redisSessionRemovalResult
         }
         case JsError(errors) =>
-          ???
+          logMessage(s"Invalid request body: $errors")
           Future.successful(BadRequest("Invalid request body.."))
 
       }
