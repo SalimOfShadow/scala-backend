@@ -1,12 +1,12 @@
 package controllers
 
 import actions.SecureAction
-import models.requests.{LoginRequest, SignUpRequest}
+import models.requests.{LoginRequest, LogoutRequest, SignUpRequest}
 import models.{AuthenticationModel, SessionModel}
-import play.api.libs.json.{JsError, JsSuccess, JsValue}
+import play.api.libs.json.{JsError, JsSuccess, JsValue, Json}
 import play.api.mvc._
 import utils.ConsoleMessage.logMessage
-import utils.JwtUtil.issueJwtCookie
+import utils.JwtUtil.{issueJwtCookie, validateToken}
 import utils.ValidateUser.{validateCreateInput, validateLoginInput}
 
 import javax.inject._
@@ -23,10 +23,10 @@ class UserController @Inject() (
 )(implicit ec: ExecutionContext)
     extends AbstractController(cc) {
 
-  def protectedEndpoint: Action[AnyContent] = secureAction { request: Request[AnyContent] =>
-    Ok("Access granted to protected resource.")
+  def protectedEndpoint: Action[AnyContent] = secureAction {
+    request: Request[AnyContent] =>
+      Ok("Access granted to protected resource.")
   }
-
 
   /** POST /create-user
     * Expects JSON with "username", "email" and "password".
@@ -114,9 +114,38 @@ class UserController @Inject() (
       }
   }
 
-  def logoutUser(): Action[JsValue] = Action.async(parse.json) {
-    ???
-  }
+  def logoutUser(): Action[JsValue] = secureAction.async(parse.json) {
+    request: Request[JsValue] =>
+      request.body.validate[LogoutRequest] match {
+        case JsSuccess(value, path) => {
+          val sessionToken = request.cookies
+            .get("sessionToken")
+            .flatMap(cookie =>
+              if (cookie.value.nonEmpty) validateToken(cookie.value) else None
+            )
+          val tokenContent =
+            sessionToken.map(claim => Json.parse(claim.content))
+          val userId =
+            tokenContent
+              .flatMap(content => (content \ "userId").asOpt[Int])
+              .map(s => s)
+          val sessionRemovedFromRedis =
+            userId.map(id => sessionModel.deleteSession(id))
+          logMessage(tokenContent)
+          logMessage("tokenContent")
+          val cookieToDiscard =
+            DiscardingCookie(name = "sessionToken", path = "/")
+          Future.successful(
+            Redirect("/login", 200).discardingCookies(
+              cookieToDiscard
+            )
+          )
+        }
+        case JsError(errors) =>
+          ???
+          Future.successful(BadRequest("Invalid request body.."))
 
+      }
+  }
 
 }

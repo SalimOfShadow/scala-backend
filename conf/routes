@@ -10,6 +10,8 @@ GET     /                               controllers.HomeController.index()
 POST    /create-user                    controllers.UserController.createUser()
 +nocsrf
 POST    /login-user                     controllers.UserController.loginUser()
++nocsrf
+POST    /logout-user                     controllers.UserController.logoutUser()
 
 # TEST - Sessions
 GET    /test/insertSession               controllers.TestController.testStoreSession()
