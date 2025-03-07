@@ -14,14 +14,14 @@ import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class UserController @Inject() (
-                                 cc: ControllerComponents,
-                                 secureAction: SecureAction,
-                                 authModel: AuthenticationModel,
-                                 sessionModel: SessionModel,
-                                 environment: play.api.Environment,
-                                 configuration: play.api.Configuration
-                               )(implicit ec: ExecutionContext)
-  extends AbstractController(cc) {
+    cc: ControllerComponents,
+    secureAction: SecureAction,
+    authModel: AuthenticationModel,
+    sessionModel: SessionModel,
+    environment: play.api.Environment,
+    configuration: play.api.Configuration
+)(implicit ec: ExecutionContext)
+    extends AbstractController(cc) {
 
   def protectedEndpoint: Action[AnyContent] = secureAction {
     request: Request[AnyContent] =>
@@ -29,9 +29,9 @@ class UserController @Inject() (
   }
 
   /** POST /create-user
-   * Expects JSON with "username", "email" and "password".
-   * Inserts a new user into the database
-   */
+    * Expects JSON with "username", "email" and "password".
+    * Inserts a new user into the database
+    */
   def createUser(): Action[JsValue] = Action.async(parse.json) {
     implicit request =>
       request.body.validate[SignUpRequest] match {
@@ -87,13 +87,17 @@ class UserController @Inject() (
               .flatMap {
                 case Some(jwt) =>
                   val jwtCookie: Cookie = issueJwtCookie(configuration, jwt)
+                  val jsonResponse = Json.obj(
+                    "message" -> "Successfully logged in",
+                    "username" -> loginReq.usernameOrEmail
+                  )
                   Future.successful(
-                    Ok("Successfully logged in")
-                      .withCookies(jwtCookie)
+                    Ok(jsonResponse)
+                      .withCookies(jwtCookie) // Return 200 with JSON response
                   ) // Return 200 OK with JWT token
                 case None =>
                   Future.successful(
-                    InternalServerError(
+                    Unauthorized(
                       "Failed to login. Please check your credentials and try again."
                     )
                   ) // Handle empty result

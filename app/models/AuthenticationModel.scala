@@ -36,8 +36,9 @@ class AuthenticationModel @Inject() (
   // Reference to the Users table from generated code
   val Users = Tables.Users
 
-  private def retrieveUserInfo(usernameOrEmail: String): Future[User] = {
-    val emptyUser = new User(-1, "", "", "", "", None, None, None)
+  private def retrieveUserInfo(
+      usernameOrEmail: String
+  ): Future[Option[User]] = {
     db.run(
       Users
         .filter(userRow =>
@@ -45,26 +46,23 @@ class AuthenticationModel @Inject() (
         )
         .result
     ).map { users =>
-      users.headOption
-        .map(user =>
-           User(
-            user.id,
-            user.username,
-            user.email,
-            user.passwordHash,
-            user.passwordSalt,
-            user.verified,
-            user.createdAt,
-            user.lastSeen
-          )
+      users.headOption.map(user =>
+        User(
+          user.id,
+          user.username,
+          user.email,
+          user.passwordHash,
+          user.passwordSalt,
+          user.verified,
+          user.createdAt,
+          user.lastSeen
         )
-        .getOrElse(emptyUser)
+      )
     }.recover { case e: Throwable =>
       println(s"An error occurred: ${e.getMessage}")
-      emptyUser
+      None
     }
   }
-
   private def validateUser(
       usernameOrEmail: String,
       hashedPassword: String
@@ -120,55 +118,59 @@ class AuthenticationModel @Inject() (
   ): Future[Option[String]] = {
     val userToLogin = retrieveUserInfo(usernameOrEmail)
 
-    userToLogin.flatMap { user =>
-      val hashedPassword = BCrypt.hashpw(password, user.passwordSalt)
+    userToLogin.flatMap {
+      case Some(user) =>
+        val hashedPassword = BCrypt.hashpw(password, user.passwordSalt)
 
-      validateUser(user.email, hashedPassword).flatMap { isValid =>
-        if (!isValid) {
-          logMessage("Incorrect credentials")
-          Future.successful(None)
-        } else {
-          sessionModel.getSession(user.id).flatMap {
-            case Some(existingSession) if existingSession.nonEmpty =>
-              logMessage(
-                s"User ${user.username} is already logged in. Issuing a new token..."
-              )
-              // If the user is already logged in,we create a new JWT,update the one on Redis and finally and return it
-              val userId = existingSession.getOrElse("userId", "").toInt
-              val username = existingSession.getOrElse("username", "")
-              val newJwtToken = JwtUtil.createToken(userId, username)
-              sessionModel.updateLastJwtIssued(userId, newJwtToken).flatMap {
-                success =>
-                  if (success) {
-                    logMessage("Successfully updated JWT in Redis")
-                    Future.successful(Some(newJwtToken))
-                  } else {
-                    logMessage("Failed to update JWT in Redis")
-                    Future.successful(None) // Or some other fallback behavior
-                  }
-              }
-            case _ =>
-              // Here we create a new JWT, and we store it in Redis...API requests for a new token will be ignored if they don't match
-              val newJwtToken =
-                JwtUtil.createToken(user.id, user.username)
-              //If there is no session, create a new one
-              sessionModel
-                .storeSession(user.id, user.username, user.email, newJwtToken)
-                .map { storedSuccessfully =>
-                  if (storedSuccessfully) {
-                    logMessage(
-                      s"New session created for user ${user.id}."
-                    )
-                    // Same if it isn't already logged in,we still create a new JWT, and we still give it back to him
-                    Some(newJwtToken)
-                  } else {
-                    logMessage(s"Failed to store session for user ${user.id}")
-                    None
-                  }
+        validateUser(user.email, hashedPassword).flatMap { isValid =>
+          if (!isValid) {
+            logMessage("Incorrect credentials")
+            Future.successful(None)
+          } else {
+            sessionModel.getSession(user.id).flatMap {
+              case Some(existingSession) if existingSession.nonEmpty =>
+                logMessage(
+                  s"User ${user.username} is already logged in. Issuing a new token..."
+                )
+                // If the user is already logged in,we create a new JWT,update the one on Redis and finally and return it
+                val userId = existingSession.getOrElse("userId", "").toInt
+                val username = existingSession.getOrElse("username", "")
+                val newJwtToken = JwtUtil.createToken(userId, username)
+                sessionModel.updateLastJwtIssued(userId, newJwtToken).flatMap {
+                  success =>
+                    if (success) {
+                      logMessage("Successfully updated JWT in Redis")
+                      Future.successful(Some(newJwtToken))
+                    } else {
+                      logMessage("Failed to update JWT in Redis")
+                      Future.successful(None) // Or some other fallback behavior
+                    }
                 }
+              case _ =>
+                // Here we create a new JWT, and we store it in Redis...API requests for a new token will be ignored if they don't match
+                val newJwtToken =
+                  JwtUtil.createToken(user.id, user.username)
+                //If there is no session, create a new one
+                sessionModel
+                  .storeSession(user.id, user.username, user.email, newJwtToken)
+                  .map { storedSuccessfully =>
+                    if (storedSuccessfully) {
+                      logMessage(
+                        s"New session created for user ${user.id}."
+                      )
+                      // Same if it isn't already logged in,we still create a new JWT, and we still give it back to him
+                      Some(newJwtToken)
+                    } else {
+                      logMessage(s"Failed to store session for user ${user.id}")
+                      None
+                    }
+                  }
+            }
           }
         }
-      }
+      case None =>
+        logMessage("User not found.")
+        Future.successful(None)
     }
   }
 

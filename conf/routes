@@ -7,11 +7,11 @@
 GET     /                               controllers.HomeController.index()
 
 +nocsrf
-POST    /create-user                    controllers.UserController.createUser()
+POST    /api/v1/create-user                    controllers.UserController.createUser()
 +nocsrf
-POST    /login-user                     controllers.UserController.loginUser()
+POST    /api/v1/login-user                     controllers.UserController.loginUser()
 +nocsrf
-POST    /logout-user                     controllers.UserController.logoutUser()
+POST    /api/v1/logout-user                     controllers.UserController.logoutUser()
 
 # TEST - Sessions
 GET    /test/insertSession               controllers.TestController.testStoreSession()

@@ -46,6 +46,7 @@ object ValidateUser {
       isUsernameValid(value) || isEmailValid(value)
     )
     val passwordValid = password.exists(isPasswordValid)
+
     usernameOrEmailValid && passwordValid
   }
 }
