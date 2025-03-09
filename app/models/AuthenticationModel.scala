@@ -108,7 +108,7 @@ class AuthenticationModel @Inject() (
           Conflict("User already exists")
         case e: Throwable =>
           logMessage(s"An error occurred while creating user: ${e.getMessage}")
-          InternalServerError("Internal Serve Error")
+          InternalServerError("Internal Server Error")
       }
   }
 

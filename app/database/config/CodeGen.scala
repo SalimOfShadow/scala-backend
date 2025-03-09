@@ -6,9 +6,8 @@ object CodeGen extends App {
     profile = "slick.jdbc.PostgresProfile",
     jdbcDriver = "org.postgresql.Driver",
     url =
-      "jdbc:postgresql://localhost:5432/postgres?user=postgres&password=postgres",
-    outputDir =
-      "/home/salim/Desktop/Projects/scala-backend/app/database/config",
+      "jdbc:postgresql://postgres_db:5432/postgres?user=postgres&password=postgres",
+    outputDir = "/home/salim/Desktop/Projects/play-backend/app/database/config",
     pkg = "database.config",
     user = None,
     password = None,

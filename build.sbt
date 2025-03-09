@@ -1,5 +1,12 @@
-name := """play-scala-seed"""
-organization := "f"
+name := """scala-auth-backend"""
+organization := "Salim Mohamed"
+//Docker Settings
+import com.typesafe.sbt.packager.docker.DockerChmodType
+import com.typesafe.sbt.packager.docker.DockerPermissionStrategy
+dockerChmodType := DockerChmodType.UserGroupWriteExecute
+dockerPermissionStrategy := DockerPermissionStrategy.CopyChown
+dockerBaseImage := "openjdk:11"
+enablePlugins(JavaAppPackaging)
 
 version := "1.0-SNAPSHOT"
 
@@ -23,7 +30,7 @@ libraryDependencies ++= Seq(
   "org.mindrot" % "jbcrypt" % "0.4",
   "org.scalatestplus" %% "mockito-5-10" % "3.2.18.0" % Test,
   "net.debasishg" %% "redisclient" % "3.42",
-    "com.github.jwt-scala" %% "jwt-play-json" % "10.0.1"
+  "com.github.jwt-scala" %% "jwt-play-json" % "10.0.1"
 )
 
 // Adds additional packages into Twirl

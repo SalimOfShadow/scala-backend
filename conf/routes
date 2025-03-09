@@ -18,6 +18,7 @@ GET    /test/insertSession               controllers.TestController.testStoreSes
 GET    /test/retrieveSession             controllers.TestController.testSessionRetrieval()
 GET    /test/getAllSession               controllers.TestController.testAllSession()
 GET    /test/deleteSession               controllers.TestController.testDeleteSession()
+GET    /test/testConnection               controllers.TestController.testConnection()
 
 # TEST - JWT
 GET    /test/createToken                 controllers.TestController.testTokenCreationAndExpiry()

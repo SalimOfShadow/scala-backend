@@ -22,6 +22,7 @@ class TestController @Inject() (
   def testConnection(): Action[AnyContent] = Action.async { implicit request =>
     authModel.getAllUsers.map { users =>
       println(s"Users: $users")
+      println(s"Database URL: ${System.getenv("DB_URL")}")
       Ok(s"Users: $users")
     } recover { case ex: Throwable =>
       println(s"An error occurred: ${ex.getMessage}")

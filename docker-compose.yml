@@ -1,0 +1,28 @@
+version: "3.8"
+
+services:
+  postgres_db:
+    image: postgres:latest
+    container_name: PostgresCont
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+
+  scala_app:
+    image: scala-auth-backend:1.0-SNAPSHOT
+    container_name: ScalaApp
+    restart: always
+    ports:
+      - "9000:9000"
+    environment:
+      DB_URL: "jdbc:postgresql://postgres_db:5432/postgres?user=postgres&password=postgres"
+    depends_on:
+      - postgres_db
+
+volumes:
+  postgres_db:
