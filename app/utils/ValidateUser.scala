@@ -32,11 +32,10 @@ object ValidateUser {
       email: Option[String],
       password: Option[String]
   ): Boolean = {
-
-    val usernameValid = username.exists(isUsernameValid)
-    val emailValid = email.exists(isEmailValid)
-    val passwordValid = password.exists(isPasswordValid)
-    usernameValid && emailValid && passwordValid}
+    username.exists(isUsernameValid) &&
+    email.exists(isEmailValid) &&
+    password.exists(isPasswordValid)
+  }
 
   def validateLoginInput(
       usernameOrEmail: Option[String],
@@ -46,7 +45,14 @@ object ValidateUser {
       isUsernameValid(value) || isEmailValid(value)
     )
     val passwordValid = password.exists(isPasswordValid)
-
     usernameOrEmailValid && passwordValid
   }
+
+  def validateForgotPasswordInput(
+      email: Option[String],
+      newPassword: Option[String]
+  ): Boolean = {
+    email.exists(isEmailValid) && newPassword.exists(isPasswordValid)
+  }
+
 }
