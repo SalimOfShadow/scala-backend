@@ -10,9 +10,10 @@ import scala.concurrent.{ExecutionContext, Future}
 class SessionModel @Inject() ()(implicit ec: ExecutionContext) {
   val config: Config = ConfigFactory.load()
   private val expirationTime = config.getString("redis.expirationTime").toInt
-
+  private val redisSecret = config.getString("redis.secret")
 //  private val expirationTime = 40
-  protected val redisPool = new RedisClientPool("localhost", 6379)
+//  TODO - Add secret param to this object
+  protected val redisPool = new RedisClientPool("redis", 6379)
 
   def storeSession(
       userId: Int,
