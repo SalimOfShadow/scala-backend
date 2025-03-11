@@ -2,8 +2,6 @@
 
 Scala Backend using Play Framework
 
-# PlanarBridge
-
 ### SignUp Request:
 
 ```json
