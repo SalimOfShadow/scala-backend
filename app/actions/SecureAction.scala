@@ -33,9 +33,10 @@ class SecureAction @Inject() (
             val jsonClaim = Json.parse(claim.content)
             (jsonClaim \ "userId").asOpt[Int] match {
               case Some(value) =>
+                // Authentication successful, continue request
                 Future.successful(
                   None
-                ) // Authentication successful, continue request
+                )
               case None =>
                 // UserId field missing, the token is invalid
                 Future.successful(Some(Redirect("/login")))
@@ -55,14 +56,14 @@ class SecureAction @Inject() (
                       val newJwtToken = createToken(userId, username)
                       sessionModel.updateLastJwtIssued(userId, newJwtToken)
                       val newJwtCookie = issueJwtCookie(config, newJwtToken)
-                      // This makes it so the request goes through while still setting a new JWT Cookie
+                      // Goes through while still setting a new JWT Cookie
                       Future
                         .successful(None)
                         .map(_ =>
                           Some(Redirect(request.uri).withCookies(newJwtCookie))
                         )
                     } else {
-                      logMessage("TOken didn't matched with the one on redis")
+                      // Redis lookup for token failed
                       Future.successful(Some(Redirect("/login")))
                     }
                 }
